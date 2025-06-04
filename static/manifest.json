@@ -1,0 +1,11 @@
+{
+  "theme_color": "#f4f4f4",
+  "background_color": "#ffffff",
+  "orientation": "any",
+  "display": "standalone",
+  "dir": "auto",
+  "lang": "en-US",
+  "name": "Flavor Awesome",
+  "short_name": "Flavor Awesome",
+  "start_url": "localhost:5173"
+}
