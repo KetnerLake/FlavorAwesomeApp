@@ -31,9 +31,9 @@
     border-radius: 0;
     box-sizing: border-box;
     flex-direction: column;    
-    height: 100vh;
+    height: 100%;
     margin: 0;
-    max-height: 100vh;
+    max-height: 100%;
     max-width: 100vw;
     opacity: 1.0;
     overflow: hidden;
