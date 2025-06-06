@@ -43,12 +43,12 @@
 
 <article class:hidden>
   {#if items.length === 0}
-      {@render children()}
+    {@render children()}
   {:else}
     <ul>
       {#each items as item}
         <li>
-          <button onclick={onchange} type="button">
+          <button onclick={() => onchange( item.id )} type="button">
             <figure>
               {#if item.photos === null}
                 <figcaption>{formatName( item.name )}</figcaption>

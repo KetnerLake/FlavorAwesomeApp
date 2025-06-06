@@ -21,7 +21,9 @@
     hidden = false,
     onback, 
     oncancel, 
+    ondelete,
     ondone, 
+    onedit,
     readonly = false, 
     value = null
   } = $props();
@@ -29,8 +31,8 @@
   let fields = $derived( flavor === null ? null : flavor.fields );
   let form = $state();
   let title = $derived.by( () => {
-    if( flavor !== null ) {
-      return readonly ? '' : `New ${flavor.singular}`
+    if( value && value.id === null ) {
+      return `New ${flavor.singular}`;
     } else {
       return '';
     }
@@ -38,16 +40,28 @@
   let valid = $derived( value !== null && value.name !== null ? true : false )
 
   function onCancelClick() {
-    const clean = {id: null};
+    if( value.id === null ) {
+      const clean = {id: null};
 
-    for( let f = 0; f < fields.length; f++ ) {
-      clean[fields[f].name] = null;
+      for( let f = 0; f < fields.length; f++ ) {
+        clean[fields[f].name] = null;
+      }
+
+      value = clean;
+      form.scrollTo( {top: 0} );
+
+      oncancel( null );
+    } else {
+      oncancel( value.id );
     }
+  }
 
-    value = clean;
-    form.scrollTo( {top: 0} );
+  function onDeleteClick() {
+    const response = confirm( 'Are you sure you want to delete this review?' );
 
-    oncancel();
+    if( response ) {
+      ondelete( value.id );
+    }
   }
 
   function onDoneClick() {
@@ -71,7 +85,7 @@
 <section class:hidden>
   <AppBar label={title} variation="sm">
     {#snippet left()}
-      {#if value && value.id === null}
+      {#if !readonly}
         <IconButton name="material-symbols:close" onclick={onCancelClick} />    
       {:else}
         <IconButton name="material-symbols:arrow-back" onclick={onback} />      
@@ -80,8 +94,8 @@
     {#snippet right()}
       {#if value && value.id !== null && readonly}
         <IconButton name="material-symbols:favorite-outline" />        
-        <IconButton name="material-symbols:edit" onclick={() => readonly = !readonly} />              
-        <IconButton name="material-symbols:delete-outline" />                           
+        <IconButton name="material-symbols:edit" onclick={onedit} />              
+        <IconButton name="material-symbols:delete-outline" onclick={onDeleteClick} />                           
       {:else}
         <IconButton onclick={onDoneClick} name="material-symbols:done" />          
       {/if}
@@ -90,126 +104,128 @@
 
   <form bind:this={form} class:readonly>
     {#each fields as field}
-      {#if field.kind === 'photo'}
-        <PhotoField 
-          name={field.name} 
-          onchange={onFieldChange} 
-          {readonly}
-          value={value && value[field.name] ? value[field.name] : null} />
-      {:else if field.kind === 'name'}
-        <NameField 
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          placeholder={field.label} 
-          {readonly} 
-          value={value && value[field.name] ? value[field.name] : null} />        
-      {:else if field.kind === 'text'}        
-        <TextField 
-          icon={field.icon} 
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          placeholder={field.hint === null ? field.label : field.hint} 
-          {readonly} 
-          value={value && value[field.name] ? value[field.name] : null} />  
-      {:else if field.kind === 'decimal'} 
-        <DecimalField 
-          icon={field.icon} 
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          placeholder={field.hint === null ? field.label : field.hint} 
-          {readonly} 
-          suffix={field.suffix}  
-          value={value && value[field.name] ? value[field.name] : null} />                     
-      {:else if field.kind === 'number'} 
-        <NumberField 
-          icon={field.icon} 
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          placeholder={field.hint === null ? field.label : field.hint} 
-          {readonly} 
-          suffix={field.suffix}  
-          value={value && value[field.name] ? value[field.name] : null} />                             
-      {:else if field.kind === 'price'} 
-        <PriceField 
-          currency={value && value[field.name] && value[field.name].currency ? value[field.name].currency : 'USD'}        
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          {readonly} 
-          value={value && value[field.name] && value[field.name].amount ? value[field.name].amount : null} />                                     
-      {:else if field.kind === 'date'} 
-        <DateField 
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          placeholder={field.label} 
-          {readonly}
-          value={value && value[field.name] ? value[field.name] : null} />
-      {:else if field.kind === 'rating'} 
-        <RatingField 
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange}
-          {readonly}
-          value={value && value[field.name] ? value[field.name] : null} />
-      {:else if field.kind === 'meter'} 
-        <MeterField 
-          icon={field.icon} 
-          items={field.options} 
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          {readonly}
-          value={value && value[field.name] ? value[field.name] : null} />
-      {:else if field.kind === 'radio'} 
-        <RadioField 
-          icon={field.icon} 
-          items={field.options} 
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          other={field.other} 
-          {readonly}
-          value={value && value[field.name] ? value[field.name] : null} />      
-      {:else if field.kind === 'profile'} 
-        <ProfileField 
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          {readonly} 
-          spokes={field.options}
-          value={value && value[field.name] ? value[field.name] : null} />
-      {:else if field.kind === 'slider'} 
-        <SliderField 
-          icon={field.icon} 
-          high={field.high} 
-          label={field.label} 
-          low={field.low} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          {readonly}
-          value={value && value[field.name] ? value[field.name] : null} />
-      {:else if field.kind === 'plot'} 
-        <PlotField 
-          label={field.label} 
-          name={field.name} 
-          onchange={onFieldChange} 
-          {readonly}
-          value={value && value[field.name] ? value[field.name] : null}
-          xhigh={field.xhigh} 
-          xlow={field.xlow} 
-          yhigh={field.yhigh} 
-          ylow={field.ylow} />
-      {:else if field.kind === 'notes'} 
-        <NotesField 
-          name={field.name} 
-          onchange={onFieldChange} 
-          {readonly}
-          value={value && value[field.name] ? value[field.name] : null} />
+      {#if !field.hidden}
+        {#if field.kind === 'photo'}
+          <PhotoField 
+            name={field.name} 
+            onchange={onFieldChange} 
+            {readonly}
+            value={value && value[field.name] ? value[field.name] : null} />
+        {:else if field.kind === 'name'}
+          <NameField 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            placeholder={field.label} 
+            {readonly} 
+            value={value && value[field.name] ? value[field.name] : null} />        
+        {:else if field.kind === 'text'}        
+          <TextField 
+            icon={field.icon} 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            placeholder={field.hint === null ? field.label : field.hint} 
+            {readonly} 
+            value={value && value[field.name] ? value[field.name] : null} />  
+        {:else if field.kind === 'decimal'} 
+          <DecimalField 
+            icon={field.icon} 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            placeholder={field.hint === null ? field.label : field.hint} 
+            {readonly} 
+            suffix={field.suffix}  
+            value={value && value[field.name] ? value[field.name] : null} />                     
+        {:else if field.kind === 'number'} 
+          <NumberField 
+            icon={field.icon} 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            placeholder={field.hint === null ? field.label : field.hint} 
+            {readonly} 
+            suffix={field.suffix}  
+            value={value && value[field.name] ? value[field.name] : null} />                             
+        {:else if field.kind === 'price'} 
+          <PriceField 
+            currency={value && value[field.name] && value[field.name].currency ? value[field.name].currency : 'USD'}        
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            {readonly} 
+            value={value && value[field.name] && value[field.name].amount ? value[field.name].amount : null} />                                     
+        {:else if field.kind === 'date'} 
+          <DateField 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            placeholder={field.label} 
+            {readonly}
+            value={value && value[field.name] ? value[field.name] : null} />
+        {:else if field.kind === 'rating'} 
+          <RatingField 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange}
+            {readonly}
+            value={value && value[field.name] ? value[field.name] : null} />
+        {:else if field.kind === 'meter'} 
+          <MeterField 
+            icon={field.icon} 
+            items={field.options} 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            {readonly}
+            value={value && value[field.name] ? value[field.name] : null} />
+        {:else if field.kind === 'radio'} 
+          <RadioField 
+            icon={field.icon} 
+            items={field.options} 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            other={field.other} 
+            {readonly}
+            value={value && value[field.name] ? value[field.name] : null} />      
+        {:else if field.kind === 'profile'} 
+          <ProfileField 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            {readonly} 
+            spokes={field.options}
+            value={value && value[field.name] ? value[field.name] : null} />
+        {:else if field.kind === 'slider'} 
+          <SliderField 
+            icon={field.icon} 
+            high={field.high} 
+            label={field.label} 
+            low={field.low} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            {readonly}
+            value={value && value[field.name] ? value[field.name] : null} />
+        {:else if field.kind === 'plot'} 
+          <PlotField 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            {readonly}
+            value={value && value[field.name] ? value[field.name] : null}
+            xhigh={field.xhigh} 
+            xlow={field.xlow} 
+            yhigh={field.yhigh} 
+            ylow={field.ylow} />
+        {:else if field.kind === 'notes'} 
+          <NotesField 
+            name={field.name} 
+            onchange={onFieldChange} 
+            {readonly}
+            value={value && value[field.name] ? value[field.name] : null} />
+        {/if}
       {/if}
     {/each}
     <!--
@@ -256,7 +272,7 @@
     flex-basis: 0;
     flex-direction: column;
     flex-grow: 1;
-    height: 100vh;
+    height: 100%;
     left: 0;
     margin: 0;
     overflow: hidden;

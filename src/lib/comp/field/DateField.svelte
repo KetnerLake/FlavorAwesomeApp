@@ -16,7 +16,7 @@
   let dialog = $state();
 
   let date = $derived.by( () => {
-    if( value ) {
+    if( value !== null ) {
       return new Intl.DateTimeFormat( navigator.language, {
         day: 'numeric',
         month: 'short',

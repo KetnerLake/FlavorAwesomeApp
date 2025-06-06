@@ -12,7 +12,7 @@
     onchange,
     readonly = false, 
     spokes = [], 
-    value = []
+    value = null
   } = $props();
 
   let dialog = $state();
@@ -37,7 +37,7 @@
 </script>
 
 {#if readonly}
-  {#if value.length > 0}
+  {#if value !== null}
     <div class="label">
       <div>
         <span>

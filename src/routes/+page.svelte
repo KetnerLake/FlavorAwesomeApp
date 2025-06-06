@@ -3,6 +3,7 @@
   import {onMount} from "svelte";  
   import Analytics from "$lib/comp/view/Analytics.svelte";
   import AppBar from "$lib/comp/AppBar.svelte";
+  import {Database} from "$lib/database.js";
   import Drawer from "$lib/comp/view/Drawer.svelte";  
   import Icon from '@iconify/svelte';  
   import IconButton from "$lib/comp/IconButton.svelte";
@@ -20,6 +21,7 @@
   let book = $state( null );
   let photos = $state( [] );
   let review = $state( null );
+  let reviewing = $state( true );
   let reviews = $state( [] );  
   let screen = $state( 'main' );
   let view = $state( 1 );
@@ -28,16 +30,19 @@
   let subtitle = $derived.by( () => {
     if( book === null ) return `You have made ${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'}`;    
     if( reviews.length === 0 ) return 'There are no reviews for this flavor';
-    return `You have made ${reviews.length} ${flavor.singular} ${reviews.length === 1 ? 'review' : 'reviews'}`;
+    return `You have made ${reviews.length} ${flavor.singular.toLowerCase()} ${reviews.length === 1 ? 'review' : 'reviews'}`;
   } );
   let theme = $derived( flavor === null ? '#5fb2ff' : flavor.primary );  
+
+  const db = new Database();
 
   onMount( () => {
     const id = window.localStorage.getItem( 'flavor-book' );
 
     if( id !== null ) {
-      book = data.tastes.findIndex( ( item ) => item.id === id );          
-    }
+      book = data.tastes.findIndex( ( item ) => item.id === id );   
+      db.browseReview( flavor.singular ).then( ( data ) => reviews = [... data] );
+    }  
   } );
   
   $effect( () => {
@@ -71,6 +76,62 @@
     }
 
     drawer.hide();
+  }
+
+  function onReviewBack() {
+    screen = 'main';
+    review = null;
+    reviewing = false;
+  }
+
+  function onReviewCancel( id ) {
+    if( id === null ) {
+      screen = 'main';
+    } else {
+      db.readReview( flavor.singular, id ).then( ( data ) => {
+        review = structuredClone( data );
+        reviewing = true;
+      } );
+    }
+  }
+
+  $inspect( reviewing );
+
+  function onReviewDelete( id ) {
+    db.deleteReview( flavor.singular, id ).then( () => db.browseReview( flavor.singular ) ).then( ( data ) => {
+      reviews = [... data];
+      screen = 'main';
+      review = null;
+      reviewing = false;
+    } );
+  }
+
+  function onReviewDone( item ) {
+    reviewing = true;
+
+    if( item.id === null ) {
+      db.addReview( flavor.singular, item ).then( () => db.browseReview( flavor.singular) ).then( ( data ) => {
+        reviews = [... data];
+        screen = 'main';      
+      } );
+    } else {
+      db.editReview( flavor.singular, item ).then( () => db.browseReview( flavor.singular ) ).then( ( data ) => {
+        reviews = [... data];
+      } );
+    }  
+  }
+
+  function onReviewEdit() {
+    reviewing = false;
+  }
+
+  function onTimelineChange( id ) {
+    console.log( id );
+    db.readReview( flavor.singular, id ).then( ( data ) => {
+      reviewing = true;
+      review = structuredClone( data );
+      screen = 'review';      
+    } );
   }
 </script>
 
@@ -111,7 +172,7 @@
   {#if view === 0}
     <Analytics hidden={view === 0 ? false : true} />      
   {:else if view === 1}
-    <Timeline items={reviews}>
+    <Timeline items={reviews} onchange={onTimelineChange}>
       <div class="empty">
         {#if flavor}
           <p>Empty Timeline</p>
@@ -161,8 +222,12 @@
 <Review 
   flavor={flavor ? flavor : null}
   hidden={screen === 'review' ? false : true}
-  oncancel={() => screen = 'main'} 
-  ondone={() => screen = 'main'}
+  onback={onReviewBack}
+  oncancel={onReviewCancel}
+  ondelete={onReviewDelete}
+  ondone={onReviewDone}
+  onedit={onReviewEdit}
+  readonly={reviewing}
   value={review} />
 
 <style>
