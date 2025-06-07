@@ -39,10 +39,7 @@
     currency = abbreviation;
     if( onchange ) onchange( {
       name, 
-      value: {
-        amount: value === null ? null : parseFloat( value ),        
-        currency
-      }
+      value: currency
     } );    
   }
 
@@ -63,10 +60,7 @@
     value = evt.value;
     if( onchange ) onchange( {
       name, 
-      value: {
-        amount: value === null ? null : parseFloat( value ),
-        currency
-      }
+      value: value === null ? null : parseFloat( value )
     } );    
   }
 </script>
@@ -85,8 +79,8 @@
       mode="decimal" 
       name="price" 
       onchange={onPriceChange} 
-      {placeholder}
-      {value} />
+      {placeholder} 
+      value={( typeof value ) === 'number' ? value.toString( 10 ) : value} />
     <button onclick={onCurrencyClick} type="button">
       <p>
         <span class="label">Currency</span>

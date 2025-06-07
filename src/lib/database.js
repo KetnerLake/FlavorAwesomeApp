@@ -17,6 +17,7 @@ export class Database {
       this.user = response.data.user.id;
     } );
 
+    this._fields = null;
     this._user = null;
   }
 
@@ -26,10 +27,7 @@ export class Database {
 
       for( let r = 0; r < response.data.length; r++ ) {
         response.data[r].photos = null;
-        response.data[r].price = {
-          amount: response.data[r].price,
-          currency: response.data[r].currency
-        };
+
         delete response.data[r].currency;        
       }
 
@@ -49,11 +47,6 @@ export class Database {
   readReview( flavor, id ) {
     return this._client.from( flavor ).select().eq( 'id', id ).limit( 1 ).single().then( ( response ) => {
       response.data.photos = [];
-      response.data.price = {
-        amount: response.data.price,
-        currency: response.data.currency
-      };
-      delete response.data.currency;
       
       if( response.data.sampled && response.data.sampled !== null ) {
         response.data.sampled = new Date( response.data.sampled );
@@ -65,8 +58,6 @@ export class Database {
 
   editReview( flavor, review ) {
     delete review.photos;
-    review.currency = review.price === null ? 'USD' : review.price.currency;    
-    review.price = review.price === null ? null : review.price.amount;    
 
     return this._client.from( flavor ).update( review ).eq( 'id', review.id );
   }
@@ -77,14 +68,26 @@ export class Database {
 
     review.id = crypto.randomUUID();
     review.user_id = this._user;      
-    review.currency = review.price === null ? 'USD' : review.price.currency;    
-    review.price = review.price === null ? null : review.price.amount;
 
     return this._client.from( flavor ).insert( review );
   }
 
   deleteReview( flavor, id ) {
     return this._client.from( flavor ).delete().eq( 'id', id );
+  }
+
+  favoriteReview( flavor, id, favorite ) {
+    return this._client.from( flavor ).update( {favorite} ).eq( 'id', id ).select().single().then( ( response ) => {
+      return response.data;
+    } );    
+  }
+
+  get fields() {
+    return this._fields;
+  }
+
+  set fields( value ) {
+    this._fields = [... value];
   }
 
   get user() {

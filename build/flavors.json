@@ -4,6 +4,7 @@
   "tastes": [
     {
       "id": "beer",
+      "active": true,
       "primary": "#ffc727",
       "secondary": "#6f3017",
       "phrase": "Bottles of Beer",
@@ -240,6 +241,7 @@
     },
     {
       "id": "cigar",
+      "active": true,
       "primary": "#9a7351",
       "secondary": "#ffffff",
       "phrase": "Cigars",
@@ -479,6 +481,7 @@
     },
     {
       "id": "coffee",
+      "active": true,
       "primary": "#b18f6a",
       "secondary": "#f5e5c0",
       "phrase": "Cups of Coffee",
@@ -537,7 +540,7 @@
           "is-key": false,
           "kind": "date",
           "label": "Roast Date",
-          "name": "roast",
+          "name": "roasted",
           "options": null
         },
         {
@@ -690,6 +693,7 @@
     },
     {
       "id": "whiskey",
+      "active": true,
       "primary": "#ddab57",
       "secondary": "#ffffff",
       "phrase": "Glasses of Whiskey",
@@ -872,6 +876,7 @@
     },
     {
       "id": "tea",
+      "active": true,
       "primary": "#86a96f",
       "secondary": "#33691E",
       "phrase": "Leaves of Tea",
@@ -1097,6 +1102,7 @@
     },
     {
       "id": "scotch",
+      "active": true,
       "primary": "#e19640",
       "secondary": "#000000",
       "phrase": "Drams of Scotch",
@@ -1290,6 +1296,7 @@
     },
     {
       "id": "wine",
+      "active": true,
       "primary": "#7e212a",
       "secondary": "#f5f4d5",
       "phrase": "Bottles of Wine",
@@ -1485,6 +1492,7 @@
     },
     {
       "id": "white_wine",
+      "active": false,
       "primary": "#e8e5d2",
       "secondary": "#000000",
       "phrase": "Bottles of White Wine",
@@ -1708,6 +1716,7 @@
     },
     { 
       "id": "cheese",
+      "active": true,
       "primary": "#FBDB65",
       "secondary": "#C25A00",
       "phrase": "Pieces of Cheese",
@@ -1904,6 +1913,7 @@
     },
     {
       "id": "cannabis",
+      "active": true,
       "primary": "#3e7b3f",
       "secondary": "#f8f8f4",
       "phrase": "Strains of Cannabis",
@@ -2157,6 +2167,7 @@
     },
     {
       "id": "chocolate",
+      "active": true,
       "primary": "#4e403b",
       "secondary": "#f5e5c0",
       "phrase": "Bars of Chocolate",
@@ -2350,6 +2361,241 @@
             "Bright/Tart",
             "Bitter",
             "Tannic"
+          ]
+        },
+        {
+          "cancelable": false,
+          "hidden": false,
+          "hint": null,
+          "icon": "text_snippet",
+          "is-key": true,
+          "kind": "notes",
+          "label": "Notes",
+          "name": "notes",
+          "options": null
+        }
+      ]
+    },
+    {
+      "id": "hotsauce",
+      "active": true,
+      "primary": "#ab4f41",
+      "secondary": "#f5e5c0",
+      "phrase": "Drops of Hot Sauce",
+      "singular": "Hot Sauce",
+      "plural": "Hot Sauces",
+      "fields": [
+        {
+          "cancelable": true,
+          "hidden": false,
+          "hint": null,
+          "icon": "photo_camera",
+          "is-key": false,
+          "kind": "photo",
+          "label": null,
+          "name": "photos",
+          "options": null
+        },
+        {
+          "cancelable": true,
+          "hidden": false,
+          "hint": null,
+          "icon": "label",
+          "is-key": true,
+          "kind": "name",
+          "label": "Hot sauce name",
+          "name": "name",
+          "options": null
+        },
+        {
+          "cancelable": true,
+          "hidden": false,
+          "hint": null,
+          "icon": "material-symbols:business-center-outline",
+          "is-key": true,
+          "kind": "text",
+          "label": "Maker",
+          "name": "maker",
+          "options": null
+        },
+        {
+          "cancelable": true,
+          "hidden": false,
+          "hint": null,
+          "icon": "material-symbols:flag-outline",
+          "is-key": true,
+          "kind": "text",
+          "label": "Origin",
+          "name": "origin",
+          "options": null
+        },
+        {
+          "cancelable": false,
+          "hidden": false,
+          "hint": null,
+          "icon": "attach_money",
+          "is-key": false,
+          "kind": "price",
+          "label": "Price",
+          "name": "price",
+          "options": null
+        },
+        {
+          "cancelable": false,
+          "hidden": false,
+          "hint": null,
+          "icon": "event",
+          "is-key": false,
+          "kind": "date",
+          "label": "Sampled",
+          "name": "sampled",
+          "options": null
+        },
+        {
+          "cancelable": true,
+          "hidden": false,
+          "hint": null,
+          "icon": "material-symbols:location-on-outline",
+          "is-key": true,
+          "kind": "text",
+          "label": "Location",
+          "name": "location",
+          "options": null
+        },
+        {
+          "cancelable": true,
+          "hidden": false,
+          "hint": null,
+          "icon": "material-symbols:repeat-rounded",
+          "is-key": true,
+          "kind": "text",
+          "label": "Buy again",
+          "name": "again",
+          "options": null
+        },        
+        {
+          "cancelable": true,
+          "hidden": false,
+          "hint": null,
+          "icon": "stars",
+          "is-key": true,
+          "kind": "rating",
+          "label": "Rating",
+          "name": "rating",
+          "options": null
+        },
+        {
+          "cancelable": false,
+          "hidden": false,
+          "hint": null,
+          "icon": "material-symbols:palette-outline",
+          "is-key": false,
+          "kind": "radio",
+          "label": "Color",
+          "name": "color",
+          "options": [
+            "Bright Red",
+            "Pale Red",
+            "Orange",
+            "Brown",
+            "Dark Brown",
+            "Green",
+            "Yellow",
+            "Mustard"
+          ]       
+        },
+        {
+          "cancelable": false,
+          "hidden": false,
+          "hint": null,
+          "icon": "material-symbols:texture",
+          "is-key": false,
+          "kind": "radio",
+          "label": "Texture",
+          "name": "texture",
+          "options": [
+            "Smooth",
+            "Velvety",
+            "Watery",
+            "Gritty",
+            "Chunky",
+            "Grainy",
+            "Oily",
+            "Sticky"
+          ]       
+        },        
+        {
+          "cancelable": true,
+          "hidden": false,
+          "hint": null,
+          "icon": "material-symbols:water-drop-outline-rounded",
+          "is-key": false,
+          "kind": "slider",
+          "label": "Viscosity",
+          "low": "Thin",
+          "high": "Thick",
+          "maximum": 7,
+          "name": "viscosity",
+          "options": null
+        },        
+        {
+          "cancelable": false,
+          "hidden": false,
+          "hint": null,
+          "icon": "material-symbols:device-thermostat",
+          "is-key": false,
+          "kind": "number",
+          "label": "Scoville heat units",
+          "name": "scoville",
+          "options": null
+        },        
+        {
+          "cancelable": true,
+          "hidden": false,
+          "hint": null,
+          "icon": "material-symbols:local-fire-department-outline-rounded",
+          "is-key": false,
+          "kind": "meter",
+          "label": "Heat Meter",
+          "name": "color",
+          "options": [
+            "Mommy!",
+            "Extreme",
+            "Painful",
+            "Powerful",
+            "Very Hot",
+            "Hot",
+            "Medium",
+            "Mild",
+            "Meh"
+          ]
+        },
+        {
+          "cancelable": false,
+          "hidden": false,
+          "hint": null,
+          "icon": "leaderboard",
+          "is-key": false,
+          "kind": "profile",
+          "label": "Flavor Wheel",
+          "name": "profile",
+          "options": [
+            "Linger",
+            "Berry Fruit",
+            "Citrus Fruit",
+            "Tropical Fruit",
+            "Dark Fruit",
+            "Floral",
+            "Herbal",
+            "Vegetal",
+            "Garlic/Onion",
+            "Vinegar",
+            "Salty",
+            "Sweet",
+            "Spices",
+            "Smoky",
+            "Roasty",
+            "Chocolate"
           ]
         },
         {

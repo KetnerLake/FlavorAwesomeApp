@@ -18,26 +18,50 @@
 
   let {
     flavor = null, 
-    hidden = false,
     onback, 
     oncancel, 
     ondelete,
     ondone, 
     onedit,
+    onfavorite,
     readonly = false, 
     value = null
   } = $props();
 
   let fields = $derived( flavor === null ? null : flavor.fields );
   let form = $state();
+  let screen = $state();
   let title = $derived.by( () => {
     if( value && value.id === null ) {
       return `New ${flavor.singular}`;
     } else {
-      return '';
+      return readonly ? '' : `Edit ${flavor.singular}`;
     }
   } );
   let valid = $derived( value !== null && value.name !== null ? true : false )
+
+  export function hide() {
+    return screen.animate( [
+      {top: 0},
+      {top: '100vh'}
+    ], {
+      duration: 300,
+      easing: 'ease-in-out',
+      fill: 'forwards'      
+    } ).finished;
+  }
+
+  export function show() {
+    form.scrollTo( {top: 0} );
+    screen.animate( [
+      {top: '100vh'},
+      {top: 0}
+    ], {
+      duration: 300,
+      easing: 'ease-in-out',
+      fill: 'forwards'
+    } );
+  }
 
   function onCancelClick() {
     if( value.id === null ) {
@@ -70,7 +94,12 @@
       alert( `${field.label} is required.` );
     } else {
       ondone( value );  
+      form.scrollTo( {top: 0} );      
     }
+  }
+
+  function onFavoriteClick() {
+    onfavorite( value.id, !value.favorite );
   }
 
   function onFieldChange( evt ) {
@@ -82,7 +111,7 @@
   $inspect( value );
 </script>
 
-<section class:hidden>
+<section bind:this={screen}>
   <AppBar label={title} variation="sm">
     {#snippet left()}
       {#if !readonly}
@@ -93,9 +122,11 @@
     {/snippet}
     {#snippet right()}
       {#if value && value.id !== null && readonly}
-        <IconButton name="material-symbols:favorite-outline" />        
+        <IconButton 
+          name={value.favorite ? 'material-symbols:favorite' : 'material-symbols:favorite-outline'}
+          onclick={onFavoriteClick} />        
+        <IconButton name="material-symbols:delete-rounded" onclick={onDeleteClick} />                                     
         <IconButton name="material-symbols:edit" onclick={onedit} />              
-        <IconButton name="material-symbols:delete-outline" onclick={onDeleteClick} />                           
       {:else}
         <IconButton onclick={onDoneClick} name="material-symbols:done" />          
       {/if}
@@ -150,12 +181,12 @@
             value={value && value[field.name] ? value[field.name] : null} />                             
         {:else if field.kind === 'price'} 
           <PriceField 
-            currency={value && value[field.name] && value[field.name].currency ? value[field.name].currency : 'USD'}        
+            currency={value && value.currency ? value.currency : 'USD'}        
             label={field.label} 
             name={field.name} 
             onchange={onFieldChange} 
             {readonly} 
-            value={value && value[field.name] && value[field.name].amount ? value[field.name].amount : null} />                                     
+            value={value && value[field.name] ? value[field.name] : null} />                                     
         {:else if field.kind === 'date'} 
           <DateField 
             label={field.label} 
@@ -278,13 +309,9 @@
     overflow: hidden;
     padding: 0;
     position: absolute;
-    top: 0;
+    top: 100vh;
     transition: top 0.30s ease-in-out;
     width: 100vw;
     z-index: 125;
-  }
-
-  section.hidden {
-    top: 100vh;
   }
 </style>

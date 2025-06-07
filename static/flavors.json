@@ -540,7 +540,7 @@
           "is-key": false,
           "kind": "date",
           "label": "Roast Date",
-          "name": "roast",
+          "name": "roasted",
           "options": null
         },
         {

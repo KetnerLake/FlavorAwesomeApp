@@ -14,11 +14,11 @@
   import Review from "$lib/comp/view/Review.svelte";
   import Timeline from "$lib/comp/view/Timeline.svelte";
 
-  let {data} = $props();
-
+  let detail;
   let drawer;
 
   let book = $state( null );
+  let data = $state();
   let photos = $state( [] );
   let review = $state( null );
   let reviewing = $state( true );
@@ -39,10 +39,22 @@
   onMount( () => {
     const id = window.localStorage.getItem( 'flavor-book' );
 
-    if( id !== null ) {
-      book = data.tastes.findIndex( ( item ) => item.id === id );   
-      db.browseReview( flavor.singular ).then( ( data ) => reviews = [... data] );
-    }  
+    fetch( '/flavors.json' ).then( ( response ) => response.json() ).then( ( catalog ) => {
+      const active = catalog.tastes.filter( ( item ) => item.active );
+      active.sort( ( a, b ) => {
+        if( a.singular > b.singular ) return 1;
+        if( a.singular < b.singular ) return -1;    
+        return 0;
+      } );      
+      catalog.tastes = [... active];
+      data = structuredClone( catalog );
+
+      if( data !== null && id !== null ) {
+        book = data.tastes.findIndex( ( item ) => item.id === id );   
+        db.fields = flavor.fields;
+        db.browseReview( flavor.singular ).then( ( data ) => reviews = [... data] );        
+      }
+    } );
   } );
   
   $effect( () => {
@@ -55,7 +67,7 @@
     }
   } );
 
-  function onAddReview() {
+  function onAddClick() {
     let fields = {id: null};
     
     for( let f = 0; f < flavor.fields.length; f++ ) {
@@ -63,7 +75,8 @@
     }
 
     review = structuredClone( fields );
-    screen = 'review';
+    reviewing = false;
+    detail.show();
   }
 
   function onBookChange( id ) {
@@ -73,20 +86,27 @@
     } else {
       book = data.tastes.findIndex( ( item ) => item.id === id );
       window.localStorage.setItem( 'flavor-book', id );
+      db.browseReview( flavor.singular ).then( ( data ) => {
+        reviews = [... data];
+      } );
     }
 
     drawer.hide();
   }
 
   function onReviewBack() {
-    screen = 'main';
-    review = null;
-    reviewing = false;
+    detail.hide().then( () => {
+      review = null;
+      reviewing = false;
+    } );
   }
 
   function onReviewCancel( id ) {
     if( id === null ) {
-      screen = 'main';
+      detail.hide().then( () => {
+        review = null;
+        reviewing = false;
+      } )
     } else {
       db.readReview( flavor.singular, id ).then( ( data ) => {
         review = structuredClone( data );
@@ -95,26 +115,27 @@
     }
   }
 
-  $inspect( reviewing );
-
   function onReviewDelete( id ) {
     db.deleteReview( flavor.singular, id ).then( () => db.browseReview( flavor.singular ) ).then( ( data ) => {
       reviews = [... data];
-      screen = 'main';
-      review = null;
-      reviewing = false;
+      detail.hide().then( () => {
+        review = null;
+        reviewing = false;
+      } );
     } );
   }
 
   function onReviewDone( item ) {
-    reviewing = true;
-
     if( item.id === null ) {
       db.addReview( flavor.singular, item ).then( () => db.browseReview( flavor.singular) ).then( ( data ) => {
         reviews = [... data];
-        screen = 'main';      
+        detail.hide().then( () => {
+          review = null;
+          reviewing = true;
+        } );
       } );
     } else {
+      reviewing = true;              
       db.editReview( flavor.singular, item ).then( () => db.browseReview( flavor.singular ) ).then( ( data ) => {
         reviews = [... data];
       } );
@@ -125,12 +146,21 @@
     reviewing = false;
   }
 
+  function onReviewFavorite( id, favorite ) {
+    db.favoriteReview( flavor.singular, id, favorite ).then( ( data ) =>  {
+      review = structuredClone( data );
+      return db.browseReview( flavor.singular );
+    } ).then( ( data ) => {
+      reviews = [... data];
+    } );
+  }
+
   function onTimelineChange( id ) {
     console.log( id );
     db.readReview( flavor.singular, id ).then( ( data ) => {
       reviewing = true;
       review = structuredClone( data );
-      screen = 'review';      
+      detail.show();
     } );
   }
 </script>
@@ -205,7 +235,7 @@
         <Icon 
           height="24" 
           icon="material-symbols:add" 
-          onclick={onAddReview} 
+          onclick={onAddClick} 
           width="24" />
       </span>
     </button>
@@ -214,19 +244,20 @@
 
 <Drawer 
   bind:this={drawer}
-  items={data.tastes} 
+  items={data && data.tastes ? data.tastes : null} 
   onclose={() => drawer.hide()} 
   onchange={onBookChange} 
   selected={flavor ? flavor.id : null} />
 
 <Review 
+  bind:this={detail}
   flavor={flavor ? flavor : null}
-  hidden={screen === 'review' ? false : true}
   onback={onReviewBack}
   oncancel={onReviewCancel}
   ondelete={onReviewDelete}
   ondone={onReviewDone}
   onedit={onReviewEdit}
+  onfavorite={onReviewFavorite}
   readonly={reviewing}
   value={review} />
 
