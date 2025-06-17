@@ -1,0 +1,14 @@
+[dev]
+command = "npm run build"
+port = 5173
+publish = "build"
+functionsPort = 9999
+autoLaunch = false
+framework = "#static"
+
+[functions]
+directory = "functions"
+
+[[redirects]]
+from = "/build"
+to = "/"

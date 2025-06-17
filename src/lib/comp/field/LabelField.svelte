@@ -1,10 +1,18 @@
 <script>
   import Icon from "@iconify/svelte";
   
-  let {gap = true, icon, label, suffix, value} = $props();
+  let {
+    bottom = true, 
+    gap = true, 
+    icon, 
+    label, 
+    suffix, 
+    top = false, 
+    value
+  } = $props();
 </script>
 
-<div>
+<div class:bottom class:top>
   <span class:noicon={!icon}>
     <Icon 
       height="24" 
@@ -20,11 +28,18 @@
 <style>
   div {
     align-items: center;
-    border-bottom: solid 1px #00000010;
     box-sizing: border-box;
     display: flex;
     flex-direction: row;
     padding: 12px 0 11px 0;
+  }
+
+  div.bottom {
+    border-bottom: solid 1px #00000010;    
+  }
+
+  div.top {
+    border-top: solid 1px #00000010;
   }
 
   div div {

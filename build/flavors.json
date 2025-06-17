@@ -121,7 +121,7 @@
           "cancelable": true,
           "hidden": false,
           "hint": null,
-          "icon": "bubble_chart",
+          "icon": "material-symbols:bubble-chart-outline",
           "is-key": false,
           "kind": "meter",
           "label": "Bubble Meter",

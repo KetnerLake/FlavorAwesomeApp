@@ -27,8 +27,8 @@
   }
 
   function onProfileChange( scoring ) {
-    value = [... scoring];
-    if( onchange ) onchange( {name, value} );
+    value = [... scoring.value];
+    if( onchange ) onchange( {name, value: scoring.value} );
   }
 
   function onProfileClick() {

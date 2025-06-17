@@ -1,17 +1,27 @@
 <script>
   import Icon from "@iconify/svelte";
 
-  let {items, onchange, onclose, selected = null} = $props();
+  let {count, items, onchange, selected = null} = $props();
 
   let drawer;
   let scrim;
   let section;
+
+  function onAboutClick() {
+    window.open( 'https://flavorawesome.com', '_blank' );
+    hide();
+  }
   
   function onItemClick( id ) {
-    selected = id;
+    if( selected !== id ) {
+      selected = id;
 
-    if( onchange ) {
-      onchange( selected );
+      if( onchange ) {
+        hide();
+        onchange( selected );
+      }
+    } else {
+      hide();      
     }
   }
 
@@ -59,7 +69,7 @@
 
 <section bind:this={section}>
   <article bind:this={scrim} class="scrim">
-    <button onclick={onclose} type="button">
+    <button onclick={() => hide()} type="button">
       <Icon 
         color="#ffffff" 
         height="24" 
@@ -80,7 +90,7 @@
               width="24" />
           </span>
           <span>All</span>
-          <span>0</span>
+          <span>{count.All}</span>
         </button>
       </li>            
       {#each items as item}
@@ -94,27 +104,14 @@
                 width="24" />
             </span>
             <span>{item.singular}</span>
-            <span>0</span>
+            <span>{count.hasOwnProperty( item.singular ) ? count[item.singular] : 0}</span>
           </button>
         </li>
       {/each}
     </ul>
     <ul>
       <li>
-        <button type="button">
-          <span>
-            <Icon 
-              color="#49454F" 
-              height="24" 
-              icon="material-symbols:settings-rounded" 
-              width="24" />
-          </span>
-          <span>Settings</span>
-          <span></span>
-        </button>
-      </li>      
-      <li>
-        <button type="button">
+        <button onclick={onAboutClick} type="button">
           <span>
             <Icon 
               color="#49454F" 
@@ -164,6 +161,7 @@
 
   article.scrim {
     align-items: flex-start;
+    backdrop-filter: blur( 4px );    
     background: #00000040;
     box-sizing: border-box;
     display: flex;

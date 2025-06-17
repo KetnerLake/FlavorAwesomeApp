@@ -4,7 +4,7 @@
 
 <header class:small={variation === 'sm' ? true : false}>
   {#if variation === 'sm'}
-    {@render left()}
+    {@render left?.()}
     <h3>{label}</h3>
     {@render right()}
   {:else}

@@ -1,8 +1,10 @@
 <script>
   import AppBar from "../AppBar.svelte";
+  import {DexieCloud} from "$lib/DexieCloud.svelte.js";  
   import DateField from "../field/DateField.svelte";
   import DecimalField from "../field/DecimalField.svelte";
   import IconButton from "../IconButton.svelte";
+  import LabelField from "../field/LabelField.svelte";
   import MeterField from "../field/MeterField.svelte";
   import NameField from "../field/NameField.svelte";
   import NotesField from "../field/NotesField.svelte";
@@ -15,30 +17,46 @@
   import RadioField from "../field/RadioField.svelte";
   import SliderField from "../field/SliderField.svelte";
   import TextField from "../field/TextField.svelte";
-
+  import UnitsField from "../field/UnitsField.svelte";
+    
   let {
     flavor = null, 
-    onback, 
-    oncancel, 
-    ondelete,
-    ondone, 
-    onedit,
-    onfavorite,
-    readonly = false, 
-    value = null
+    onchange
   } = $props();
 
-  let fields = $derived( flavor === null ? null : flavor.fields );
   let form = $state();
+  let readonly = $state( false );
   let screen = $state();
+  let value = $state( null );
+
+  let fields = $derived( flavor === null ? null : flavor.fields );
   let title = $derived.by( () => {
-    if( value && value.id === null ) {
-      return `New ${flavor.singular}`;
+    if( value === null || value.id === null ) {
+      return `New ${flavor === null ? '' : flavor.singular}`;
     } else {
-      return readonly ? '' : `Edit ${flavor.singular}`;
+      return readonly ? '' : `Edit ${flavor === null ? '' : flavor.singular}`;
     }
   } );
   let valid = $derived( value !== null && value.name !== null ? true : false )
+
+  const db = new DexieCloud();
+  
+  let geolocation = null;
+  let latitude = null;
+  let longitude = null;
+  let temperature = null;
+  let condition = null;
+  let weather = null;
+
+  function clear() {
+    const clean = {id: null, photos: null};
+
+    for( let f = 0; f < fields.length; f++ ) {
+      clean[fields[f].name] = null;
+    }
+
+    value = clean;
+  }
 
   export function hide() {
     return screen.animate( [
@@ -48,35 +66,66 @@
       duration: 300,
       easing: 'ease-in-out',
       fill: 'forwards'      
-    } ).finished;
-  }
-
-  export function show() {
-    form.scrollTo( {top: 0} );
-    screen.animate( [
-      {top: '100vh'},
-      {top: 0}
-    ], {
-      duration: 300,
-      easing: 'ease-in-out',
-      fill: 'forwards'
+    } ).finished.then( () => {
+      readonly = true;      
+      form.scrollTo( {top: 0} );  
+      clear();
     } );
   }
 
-  function onCancelClick() {
-    if( value.id === null ) {
-      const clean = {id: null};
+  export function show( id = null ) {
+    if( id === null ) {
+      clear();
+      readonly = false;    
+      
+      screen.animate( [
+        {top: '100vh'},
+        {top: 0}
+      ], {
+        duration: 300,
+        easing: 'ease-in-out',
+        fill: 'forwards'
+      } ).finished.then( () => {
+        geolocation = navigator.geolocation.watchPosition( ( position ) => {
+          latitude = position.coords.latitude;
+          longitude = position.coords.longitude;
+          navigator.geolocation.clearWatch( geolocation );
+          geolocation = null;
 
-      for( let f = 0; f < fields.length; f++ ) {
-        clean[fields[f].name] = null;
-      }
-
-      value = clean;
-      form.scrollTo( {top: 0} );
-
-      oncancel( null );
+          fetch( `/api/weather?location=${latitude},${longitude}` )
+          .then( ( response ) => response.json() )
+          .then( ( data ) => {
+            weather = data.icon;
+            temperature = data.temperature;
+            condition = data.condition;
+          } );
+        } );
+      } );            
     } else {
-      oncancel( value.id );
+      db.readReview( id ).then( ( data ) => {
+        value = data;
+        readonly = true;              
+
+        screen.animate( [
+          {top: '100vh'},
+          {top: 0}
+        ], {
+          duration: 300,
+          easing: 'ease-in-out',
+          fill: 'forwards'
+        } );      
+      } );
+    }
+  }
+
+  async function onCancelClick() {
+    if( value === null || value.id === null ) {
+      hide();      
+    } else {
+      db.readReview( value.id ).then( ( data ) => {
+        value = data;
+        readonly = true;
+      } );
     }
   }
 
@@ -84,7 +133,10 @@
     const response = confirm( 'Are you sure you want to delete this review?' );
 
     if( response ) {
-      ondelete( value.id );
+      db.deleteReview( value.id ).then( () => {
+        onchange();                 
+        hide();
+      } );
     }
   }
 
@@ -93,13 +145,40 @@
       const field = fields.find( ( item ) => item.name === 'name' );
       alert( `${field.label} is required.` );
     } else {
-      ondone( value );  
-      form.scrollTo( {top: 0} );      
+      if( value.id === null ) {
+        value.latitude = latitude;
+        value.longitude = longitude;
+        value.temperature = temperature;
+        value.condition = condition;
+        value.weather = weather;
+
+        db.addReview( flavor.singular, value ).then( () => {
+          onchange();
+          hide();
+        } );
+      } else {
+        readonly = true;              
+        db.editReview( value ).then( ( data ) => {
+          value = data;
+          onchange(); 
+        } );
+      }
     }
   }
 
+  function onEditClick() {
+    readonly = false;
+  }
+
   function onFavoriteClick() {
-    onfavorite( value.id, !value.favorite );
+    value.favorite = !value.favorite;
+    db.favoriteReview( value.id, value.favorite ).then( ( data ) =>  {
+      value = data;
+
+      if( onchange ) {
+        onchange();
+      }
+    } );
   }
 
   function onFieldChange( evt ) {
@@ -117,7 +196,7 @@
       {#if !readonly}
         <IconButton name="material-symbols:close" onclick={onCancelClick} />    
       {:else}
-        <IconButton name="material-symbols:arrow-back" onclick={onback} />      
+        <IconButton name="material-symbols:arrow-back" onclick={() => hide()} />      
       {/if}
     {/snippet}
     {#snippet right()}
@@ -125,8 +204,12 @@
         <IconButton 
           name={value.favorite ? 'material-symbols:favorite' : 'material-symbols:favorite-outline'}
           onclick={onFavoriteClick} />        
-        <IconButton name="material-symbols:delete-rounded" onclick={onDeleteClick} />                                     
-        <IconButton name="material-symbols:edit" onclick={onedit} />              
+        <IconButton 
+          name="material-symbols:delete-outline-rounded" 
+          onclick={onDeleteClick} />                                     
+        <IconButton 
+          name="material-symbols:edit-outline-rounded" 
+          onclick={onEditClick} />              
       {:else}
         <IconButton onclick={onDoneClick} name="material-symbols:done" />          
       {/if}
@@ -179,6 +262,16 @@
             {readonly} 
             suffix={field.suffix}  
             value={value && value[field.name] ? value[field.name] : null} />                             
+        {:else if field.kind === 'units'} 
+          <UnitsField
+            icon={field.icon} 
+            label={field.label} 
+            name={field.name} 
+            onchange={onFieldChange} 
+            placeholder={field.hint === null ? field.label : field.hint} 
+            {readonly}
+            suffix={field.options}
+            value={value && value[field.name] ? value[field.name] : null} />                                         
         {:else if field.kind === 'price'} 
           <PriceField 
             currency={value && value.currency ? value.currency : 'USD'}        
@@ -259,23 +352,28 @@
         {/if}
       {/if}
     {/each}
-    <!--
-    <PhotoField name="photos" {readonly} value={[{data: '/img/ashton.jpg'}]} />
-    <NameField label="Beer name" name="name" placeholder="Beer name" {readonly} value="Miller Lite" />
-    <TextField icon="material-symbols:business-center-outline" label="Brewer" name="brewer" placeholder="Brewer" {readonly} value="Busch InBev" />
-    <TextField label="Brewer" name="brewer" placeholder="Brewer" {readonly} value="Busch InBev" />    
-    <DecimalField gap={false} label="ABV" name="abv" placeholder="Alcogol By Volume" {readonly} suffix="%" value="3.2" />
-    <NumberField label="IBU" name="ibu" placeholder="International Bitterness Unit" {readonly} value="32" />    
-    <PriceField name="price" {readonly} value="12.34" />
-    <DateField label="Sampled" name="sampled" placeholder="Sampled" {readonly} value={new Date()} />
-    <RatingField label="Rating" name="rating" {readonly} value={3} />
-    <RadioField icon="material-symbols:sports-bar-outline" items={serving} label="Serving Type" {readonly} value="Cask" />
-    <PlotField label="Texture Plot" {readonly} value="0.50, 0.50" xhigh="Smooth" xlow="Grainy" yhigh="Snappy" ylow="Soft" />        
-    <MeterField icon="material-symbols:bubble-chart-outline" items={['Three', 'Two', 'One']} label="Bubbles" name="bubbles" {readonly} value="One" />
-    <SliderField icon="material-symbols:eyeglasses" high="Shiny" label="Appearance" low="Dull" {readonly} value={3} />    
-    <ProfileField label="Flavor Wheel" name="profile" {readonly} {spokes} value={profile} />    
-    <NotesField name="notes" {readonly} value="This is a test." />
-    -->
+    {#if readonly && value && value.latitude}
+      <div class="extra">
+        <LabelField 
+          bottom={false}
+          icon="material-symbols:my-location-outline-rounded" 
+          label="Coordinates" 
+          top={true}
+          value="{value.latitude.toFixed( 5 )}, {value.longitude.toFixed( 5 )}">
+        </LabelField>
+      </div>
+    {/if}
+    {#if readonly && value && value.weather}
+      <div class="extra">
+        <LabelField 
+          bottom={false}
+          icon={value.weather} 
+          label="Weather" 
+          top={true}
+          value="{value.condition}, {value.temperature.toFixed( 0 )}&deg;F">
+        </LabelField>
+      </div>
+    {/if}    
   </form>
 </section>
 

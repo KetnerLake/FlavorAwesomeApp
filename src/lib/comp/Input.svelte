@@ -1,9 +1,10 @@
 <script>
   import '@fontsource-variable/roboto';
   import Icon from "@iconify/svelte";
-  import NumberParser from "$lib/number-parser";  
+  import NumberParser from "$lib/NumberParser";  
 
   let {
+    children,
     label, 
     mode = 'text',
     name, 
@@ -13,6 +14,7 @@
     value = null
   } = $props();
 
+  let focus = false;
   let input;
 
   function onClearClick( evt ) {
@@ -24,6 +26,8 @@
   }
 
   function onInputBlur() {
+    focus = false;
+    
     if( mode === 'numeric' || mode === 'decimal' ) {      
       const digits = mode === 'numeric' ? 0 : 2;
 
@@ -42,6 +46,8 @@
   }
 
   function onInputFocus() {
+    focus = true;
+
     if( mode === 'numeric' || mode === 'decimal' ) {
       if( value !== null ) {
         const parser = new NumberParser( navigator.language );
@@ -78,6 +84,7 @@
     </button>
   {/if}
 </label>
+{@render children?.()}  
 
 <style>
   button {
@@ -150,6 +157,7 @@
     outline: none;
     padding: 8px 4px 6px 16px;
     position: relative;
+    width: var( --label-width );
     -webkit-tap-highlight-color: transparent;    
   }
 

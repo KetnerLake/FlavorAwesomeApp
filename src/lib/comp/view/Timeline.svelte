@@ -56,7 +56,7 @@
                 <img 
                   alt="Thumbnail" 
                   height="64" 
-                  src={item.photos[0].src} 
+                  src={item.photos[0].data} 
                   width="100" />              
               {/if}
               {#if item.favorite}
@@ -69,7 +69,7 @@
               {/if}                              
             </figure>
             <div class="item">
-              <p class="created">{formatDate( item.createdAt )}</p>
+              <p class="created">{formatDate( item.updated_at )}</p>
               <div class="rating">
                 {#each {length: 5}, index}
                   <Icon 

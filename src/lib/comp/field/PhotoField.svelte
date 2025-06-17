@@ -20,6 +20,15 @@
   let canvas = $state();
   let input = $state();
 
+  // This is a no-no
+  // But I cannot think of a better way
+  $effect( () => {
+    if( value === null ) {
+      files = [];
+      index = 0;
+    }
+  } );
+
   function onAddClick() {
     input.click();    
   }
@@ -32,10 +41,11 @@
     if( onchange ) onchange( {name, value} );
   }
 
-  function onImageLoad( evt ) {
+  async function onImageLoad( evt ) {
     const img = evt.currentTarget;
     const format = img.getAttribute( 'data-type' );    
     const named = img.getAttribute( 'data-name' );
+    const extension = named.lastIndexOf( '.' ) + 1;
 
     let width = img.width;
     let height = img.height;
@@ -54,11 +64,15 @@
     context.drawImage( img, 0, 0, width, height );
 
     const photo = {
+      id: crypto.randomUUID(),
+      created_at: new Date(),
+      updated_at: new Date(),
+      data: canvas.toDataURL( format, compression ),
       format: format,
       name: named,
-      data: canvas.toDataURL( format, compression ),
-      width: img.width,
-      height: img.height
+      extension: named.substring( extension ),
+      width: width,
+      height: height
     };
 
     if( value === null ) {
@@ -69,7 +83,7 @@
 
     index = value.length - 1;
 
-    evt.currentTarget.remove();
+    evt.target.remove();
 
     if( onchange ) onchange( {name, value} );
   }
@@ -93,7 +107,9 @@
 {#if readonly} 
   {#if value !== null}
     <figure>
-      <img alt="Cigar" src="/img/ashton.jpg" />
+      <img 
+        alt="Cigar" 
+        src={value[index].data ? value[index].data : value[index].storage_url} />
 
       {#if value.length > 1}
         <button 
@@ -118,7 +134,9 @@
     {#if value === null || value.length === 0}
       <p>{placeholder}</p>
     {:else}
-      <img alt={label} src={value[index].data} />
+      <img 
+        alt={label} 
+        src={value[index].data ? value[index].data : value[index].storage_url} />
 
       {#if value.length > 1}
         <button 
@@ -253,7 +271,7 @@
   }
 
   img {
-    height: 100%;
+    height: 225px;
     object-fit: cover;
     width: 100%;
   }

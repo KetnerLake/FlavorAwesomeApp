@@ -9,7 +9,7 @@
     currency = 'USD', 
     name, 
     onchange,
-    placeholder, 
+    placeholder = '0.00', 
     readonly = false, 
     value = null
   } = $props();

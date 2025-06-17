@@ -2,7 +2,7 @@
   import '@fontsource-variable/roboto';
   import Icon from "@iconify/svelte";
 
-  let {children, hidden = false, items = []} = $props();
+  let {children, hidden = false, items = [], onchange} = $props();
 
   function formatDate( value ) {
     return new Intl.DateTimeFormat( navigator.language, {
@@ -10,6 +10,10 @@
       year: 'numeric'
     } ).format( value );
   }  
+
+  function onPhotoClick( id ) {
+    if( onchange ) onchange( id );
+  }
 </script>
 
 <article class:hidden>
@@ -19,10 +23,10 @@
     <ul>
       {#each items as item}
         <li>
-          <button type="button">
-            <img alt="Thumbnail" src={item.src} />
-            <p class="date">{item.createdAt.getDate()}</p>
-            <p class="month">{formatDate( item.createdAt )}</p>
+          <button onclick={() => onPhotoClick( item.id )} type="button">
+            <img alt="Thumbnail" src={item.data} />
+            <p class="date">{item.created_at.getDate()}</p>
+            <p class="month">{formatDate( item.created_at )}</p>
             {#if item.favorite}
               <span>
                 <Icon 
@@ -118,8 +122,6 @@
   ul {
     box-sizing: border-box;
     display: grid; 
-    flex-basis: 0;
-    flex-grow: 1;
     gap: 2px 2px;     
     grid-template-columns: 1fr 1fr;     
     list-style: none;

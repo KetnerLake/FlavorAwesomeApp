@@ -1,9 +1,10 @@
 <script>
   import '@fontsource-variable/roboto';
   import {onMount} from "svelte";  
+  import Account from '$lib/comp/view/Account.svelte';  
   import Analytics from "$lib/comp/view/Analytics.svelte";
   import AppBar from "$lib/comp/AppBar.svelte";
-  import {Database} from "$lib/database.js";
+  import {DexieCloud} from "$lib/DexieCloud.svelte.js";
   import Drawer from "$lib/comp/view/Drawer.svelte";  
   import Icon from '@iconify/svelte';  
   import IconButton from "$lib/comp/IconButton.svelte";
@@ -14,19 +15,53 @@
   import Review from "$lib/comp/view/Review.svelte";
   import Timeline from "$lib/comp/view/Timeline.svelte";
 
+  let account;
   let detail;
   let drawer;
 
-  let book = $state( null );
+  let count = $state( {} );
   let data = $state();
-  let photos = $state( [] );
-  let review = $state( null );
-  let reviewing = $state( true );
   let reviews = $state( [] );  
-  let screen = $state( 'main' );
+  let settings = $state( {
+    id: crypto.randomUUID(),
+    book: null
+  } );
   let view = $state( 1 );
 
+  let book = $derived( settings.book );
+  let colors = $derived( data?.tastes.reduce( ( acc, curr ) => {
+    acc[curr.singular] = curr.primary;      
+    return acc;
+  }, {} ) );
   let flavor = $derived( book === null ? null : data.tastes[book] );  
+  let photos = $derived.by( () => {
+    return reviews.reduce( ( acc, curr ) => {
+      if( curr.photos !== null ) {
+        for( let p = 0; p < curr.photos.length; p++ ) {
+          acc.push( {
+            id: curr.id,
+            created_at: new Date( curr.created_at.getTime() ),
+            data: curr.photos[p].data,
+            favorite: curr.favorite
+          } );
+        }
+      }
+      return acc;
+    }, [] );
+  } );  
+  let places = $derived.by( () => {
+    return reviews.reduce( ( acc, curr ) => {
+      if( curr.latitude !== null ) {
+        acc.push( {
+          id: curr.id,
+          color: colors[curr.type],
+          latitude: curr.latitude, 
+          longitude: curr.longitude
+        } );
+      }
+      return acc;
+    }, [] );
+  } );
   let subtitle = $derived.by( () => {
     if( book === null ) return `You have made ${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'}`;    
     if( reviews.length === 0 ) return 'There are no reviews for this flavor';
@@ -34,12 +69,14 @@
   } );
   let theme = $derived( flavor === null ? '#5fb2ff' : flavor.primary );  
 
-  const db = new Database();
+  const db = new DexieCloud();
 
   onMount( () => {
-    const id = window.localStorage.getItem( 'flavor-book' );
-
-    fetch( '/flavors.json' ).then( ( response ) => response.json() ).then( ( catalog ) => {
+    fetch( '/flavors.json' )
+    .then( ( response ) => response.json() )
+    .then( ( catalog ) => {
+      // console.log( 'MAIN USER' );
+      // console.log( db.userId );
       const active = catalog.tastes.filter( ( item ) => item.active );
       active.sort( ( a, b ) => {
         if( a.singular > b.singular ) return 1;
@@ -47,16 +84,29 @@
         return 0;
       } );      
       catalog.tastes = [... active];
-      data = structuredClone( catalog );
+      data = catalog;
 
-      if( data !== null && id !== null ) {
-        book = data.tastes.findIndex( ( item ) => item.id === id );   
-        db.fields = flavor.fields;
-        db.browseReview( flavor.singular ).then( ( data ) => reviews = [... data] );        
-      }
+      db.readSettings().then( ( result ) => {
+        if( result !== null ) {
+          settings = result;
+
+          if( flavor === null ) {
+            return db.browseReview();          
+          } else {
+            return db.browseReview( flavor.singular );          
+          }
+        } else {
+          return db.browseReview();          
+        }
+      } ).then( ( result ) => {
+        reviews = [... result];
+        return db.countReview();
+      } ).then( ( result ) => {
+        count = result;
+      } );
     } );
   } );
-  
+
   $effect( () => {
     if( flavor ) {
       document.documentElement.style.setProperty( '--primary-accent-color', flavor.primary );
@@ -67,101 +117,59 @@
     }
   } );
 
-  function onAddClick() {
-    let fields = {id: null};
-    
-    for( let f = 0; f < flavor.fields.length; f++ ) {
-      fields[flavor.fields[f].name] = null;
-    }
+  function onAccountClick() {
+    console.log( 'SHOW ACCOUNT: ' + db.userId );
+    account.show();
+  }
 
-    review = structuredClone( fields );
-    reviewing = false;
-    detail.show();
+  function onAddClick() {
+    if( db.userId === 'unauthorized' ) {
+      db.countReviews().then( ( count ) => {
+        if( count >= 3 ) {
+          const result = confirm( 'Create an account to continue?' );
+          if( result ) {
+            account.show();
+          }
+        } else {
+          detail.show();
+        }
+      } );
+    } else {
+      detail.show();
+    }
   }
 
   function onBookChange( id ) {
+    reviews = [];
+
     if( id === null ) {
-      window.localStorage.removeItem( 'flavor-book' );
-      book = null;
+      settings.book = null;
+      db.updateSettings( settings );
+      db.browseReview().then( ( result ) => reviews = [... result] );
     } else {
-      book = data.tastes.findIndex( ( item ) => item.id === id );
-      window.localStorage.setItem( 'flavor-book', id );
-      db.browseReview( flavor.singular ).then( ( data ) => {
-        reviews = [... data];
-      } );
+      settings.book = data.tastes.findIndex( ( item ) => item.id === id );
+      db.updateSettings( settings );
+      db.browseReview( flavor.singular ).then( ( result ) => reviews = [... result] );
     }
 
     drawer.hide();
   }
 
-  function onReviewBack() {
-    detail.hide().then( () => {
-      review = null;
-      reviewing = false;
-    } );
+  function onMapChange( id ) {
+    detail.show( id );
   }
 
-  function onReviewCancel( id ) {
-    if( id === null ) {
-      detail.hide().then( () => {
-        review = null;
-        reviewing = false;
-      } )
-    } else {
-      db.readReview( flavor.singular, id ).then( ( data ) => {
-        review = structuredClone( data );
-        reviewing = true;
-      } );
-    }
+  function onPhotosChange( id ) {
+    detail.show( id );
   }
 
-  function onReviewDelete( id ) {
-    db.deleteReview( flavor.singular, id ).then( () => db.browseReview( flavor.singular ) ).then( ( data ) => {
-      reviews = [... data];
-      detail.hide().then( () => {
-        review = null;
-        reviewing = false;
-      } );
-    } );
-  }
-
-  function onReviewDone( item ) {
-    if( item.id === null ) {
-      db.addReview( flavor.singular, item ).then( () => db.browseReview( flavor.singular) ).then( ( data ) => {
-        reviews = [... data];
-        detail.hide().then( () => {
-          review = null;
-          reviewing = true;
-        } );
-      } );
-    } else {
-      reviewing = true;              
-      db.editReview( flavor.singular, item ).then( () => db.browseReview( flavor.singular ) ).then( ( data ) => {
-        reviews = [... data];
-      } );
-    }  
-  }
-
-  function onReviewEdit() {
-    reviewing = false;
-  }
-
-  function onReviewFavorite( id, favorite ) {
-    db.favoriteReview( flavor.singular, id, favorite ).then( ( data ) =>  {
-      review = structuredClone( data );
-      return db.browseReview( flavor.singular );
-    } ).then( ( data ) => {
-      reviews = [... data];
-    } );
+  function onReviewChange() {
+    db.browseReview( flavor.singular ).then( ( result ) => reviews = [... result] );
+    db.countReview().then( ( result ) => count = result );
   }
 
   function onTimelineChange( id ) {
-    console.log( id );
-    db.readReview( flavor.singular, id ).then( ( data ) => {
-      reviewing = true;
-      review = structuredClone( data );
-      detail.show();
-    } );
+    detail.show( id );
   }
 </script>
 
@@ -177,6 +185,9 @@
     {/snippet}
     {#snippet right()}
       <IconButton name="material-symbols:search" />
+      <IconButton 
+        name="material-symbols:account-circle" 
+        onclick={onAccountClick} />      
     {/snippet}
   </AppBar>
 
@@ -200,7 +211,7 @@
   </NavigationBar>  
 
   {#if view === 0}
-    <Analytics hidden={view === 0 ? false : true} />      
+    <Analytics {flavor} hidden={view === 0 ? false : true} items={reviews} />      
   {:else if view === 1}
     <Timeline items={reviews} onchange={onTimelineChange}>
       <div class="empty">
@@ -219,23 +230,22 @@
       </div>
     </Timeline>
   {:else if view === 2}
-    <Photos items={photos}>
+    <Photos items={photos} onchange={onPhotosChange}>
       <div class="empty">
         <p class="photos">Empty Photos</p>
         <p class="photos">There are no reviews with photos.</p>                
       </div>
     </Photos>
   {:else if view === 3}
-    <Map />  
+    <Map items={places} onchange={onMapChange} />  
   {/if}
 
   {#if flavor}
-    <button class="fab" type="button">
+    <button class="fab" onclick={onAddClick} type="button">
       <span>
         <Icon 
           height="24" 
           icon="material-symbols:add" 
-          onclick={onAddClick} 
           width="24" />
       </span>
     </button>
@@ -244,22 +254,17 @@
 
 <Drawer 
   bind:this={drawer}
+  {count}
   items={data && data.tastes ? data.tastes : null} 
-  onclose={() => drawer.hide()} 
   onchange={onBookChange} 
   selected={flavor ? flavor.id : null} />
 
 <Review 
   bind:this={detail}
   flavor={flavor ? flavor : null}
-  onback={onReviewBack}
-  oncancel={onReviewCancel}
-  ondelete={onReviewDelete}
-  ondone={onReviewDone}
-  onedit={onReviewEdit}
-  onfavorite={onReviewFavorite}
-  readonly={reviewing}
-  value={review} />
+  onchange={onReviewChange} />
+
+<Account bind:this={account} onchange={onReviewChange} />
 
 <style>
   :root {

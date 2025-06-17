@@ -2,7 +2,7 @@
   import Icon from "@iconify/svelte";
   import Wheel from "../Wheel.svelte";
 
-  let {name, onchange, spokes, value} = $props();
+  let {name, onchange, spokes, value = null} = $props();
 
   let index = $state( 0 );
   let rotate = $state( 0 );
@@ -28,6 +28,8 @@
   }
 
   function onValueClick( evt ) {
+    if( value === null ) value = new Array( spokes.length );
+
     const attribute = parseInt( evt.currentTarget.getAttribute( 'data-value' ) );
 
     if( value[index] === attribute ) {
@@ -37,7 +39,7 @@
     }
 
     value = [... value];
-    if( onchange ) onchange( {name: name, value: value} );    
+    if( onchange ) onchange( {name, value} );    
 
     onRightClick();
   }
