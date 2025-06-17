@@ -36,8 +36,6 @@ export class DexieCloud {
     clone.type = flavor;    
     clone.created_at = new Date();
     clone.updated_at = new Date();
-    clone.weather = null;
-    clone.temperature = null;
     clone.favorite = false;
 
     return this._db.review.add( clone );
