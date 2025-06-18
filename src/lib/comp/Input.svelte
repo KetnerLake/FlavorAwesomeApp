@@ -98,6 +98,7 @@
     margin: 0;
     padding: 0;
     width: 40px;
+    -webkit-tap-highlight-color: transparent;
   }
 
   div.field {

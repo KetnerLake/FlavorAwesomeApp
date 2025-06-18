@@ -22,6 +22,7 @@
   let count = $state( {} );
   let data = $state();
   let reviews = $state( [] );  
+  let searching = $state( false );
   let settings = $state( {
     id: crypto.randomUUID(),
     book: null
@@ -63,6 +64,18 @@
     }, [] );
   } );
   let subtitle = $derived.by( () => {
+    if( searching ) {
+      if( reviews.length === 0 ) {
+        return 'There are no matching reviews';
+      } else {
+        if( reviews.length === 1 ) {
+          return `There is ${reviews.length} matching review`;
+        } else {
+          return `There are ${reviews.length} matching reviews`;
+        }
+      }
+    }
+
     if( book === null ) return `You have made ${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'}`;    
     if( reviews.length === 0 ) return 'There are no reviews for this flavor';
     return `You have made ${reviews.length} ${flavor.singular.toLowerCase()} ${reviews.length === 1 ? 'review' : 'reviews'}`;
@@ -168,6 +181,24 @@
     db.countReview().then( ( result ) => count = result );
   }
 
+  function onSearchCancel() {
+    searching = false;
+    db.browseReview( flavor ? flavor.singular : null ).then( ( result ) => reviews = [... result] );
+  }
+
+  function onSearchChange( query ) {
+    if( query === null ) {
+      db.browseReview( flavor ? flavor.singular : null ).then( ( result ) => reviews = [... result] );
+    } else {
+      db.browseReview( flavor ? flavor.singular : null, query ).then( ( result ) => reviews = [... result] );
+    }
+  }
+
+  function onSearchClick( evt ) {
+    evt.preventDefault();
+    searching = true;
+  }
+
   function onTimelineChange( id ) {
     detail.show( id );
   }
@@ -179,12 +210,17 @@
 </svelte:head>
 
 <section>
-  <AppBar label={flavor ? flavor.phrase : 'Flavor Awesome'} subtitle={subtitle}>
+  <AppBar 
+    label={flavor ? flavor.phrase : 'Flavor Awesome'} 
+    oncancel={onSearchCancel} 
+    onchange={onSearchChange} 
+    subtitle={subtitle} 
+    variation={searching ? 'search' : null}>
     {#snippet left()}
       <IconButton name="material-symbols:menu" onclick={() => drawer.show()} />
     {/snippet}
     {#snippet right()}
-      <IconButton name="material-symbols:search" />
+      <IconButton name="material-symbols:search" onclick={onSearchClick} />
       <IconButton 
         name="material-symbols:account-circle" 
         onclick={onAccountClick} />      

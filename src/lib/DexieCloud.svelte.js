@@ -15,11 +15,37 @@ export class DexieCloud {
     } );    
   }
 
-  browseReview( flavor = null ) {
+  _filter( data, query ) {
+    return data.filter( ( item ) => {
+      if( item.name.toLowerCase().indexOf( query ) >= 0 ) {
+        return true;
+      }
+
+      if( item.notes && item.notes.toLowerCase().indexOf( query ) >= 0 ) {
+        return true;
+      }            
+
+      return false;
+    } );
+  }
+
+  browseReview( flavor = null, query = null ) {
     if( flavor === null ) {
-      return this._db.review.orderBy( 'updated_at' ).reverse().toArray();
+      if( query === null ) {
+        return this._db.review.orderBy( 'updated_at' ).reverse().toArray();
+      } else {
+        return this._db.review.orderBy( 'updated_at' ).reverse().toArray().then( ( data ) => {
+          return this._filter( data, query );
+        } );        
+      }
     } else {
-      return this._db.review.where( 'type' ).equals( flavor ).reverse().sortBy( 'updated_at' );
+      if( query === null ) {
+        return this._db.review.where( 'type' ).equals( flavor ).reverse().sortBy( 'updated_at' );
+      } else {
+        return this._db.review.where( 'type' ).equals( flavor ).reverse().sortBy( 'updated_at' ).then( ( data ) => {
+          return this._filter( data, query );
+        } );
+      }
     }
   }
 
