@@ -35,7 +35,7 @@
 
 {#if readonly}
   {#if value !== null}
-    <LabelField {gap} {icon} {label} {suffix} {format} />
+    <LabelField {gap} {icon} {label} {suffix} {format} {value} />
   {/if}
 {:else}
   <div>
