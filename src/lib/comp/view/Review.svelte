@@ -70,10 +70,12 @@
       readonly = true;      
       form.scrollTo( {top: 0} );  
       clear();
+      screen.style.display = 'none';
     } );
   }
 
   export function show( id = null ) {
+    screen.style.display = 'flex';
     if( id === null ) {
       clear();
       readonly = false;    
@@ -397,7 +399,7 @@
   section {
     background: #ffffff;
     box-sizing: border-box;
-    display: flex;
+    display: none;
     flex-basis: 0;
     flex-direction: column;
     flex-grow: 1;
