@@ -179,7 +179,7 @@
     }
     */
 
-    drawer.hide();
+    // drawer.hide();
   }
 
   function onMapChange( id ) {

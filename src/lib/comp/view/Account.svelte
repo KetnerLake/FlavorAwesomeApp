@@ -26,10 +26,13 @@
       duration: 300,
       easing: 'ease-in-out',
       fill: 'forwards'      
-    } ).finished;
+    } ).finished.then( () => {
+      screen.style.display = 'none';
+    } );
   }
 
   export function show() {
+    screen.style.display = 'flex';
     screen.animate( [
       {top: '100vh'},
       {top: 0}
@@ -269,7 +272,7 @@
   section {
     background: #ffffff;
     box-sizing: border-box;
-    display: flex;
+    display: none;
     flex-basis: 0;
     flex-direction: column;
     flex-grow: 1;
