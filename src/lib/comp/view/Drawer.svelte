@@ -94,8 +94,8 @@
         </button>
       </li>            
       {#each items as item}
-        <li class:selected={item.id === selected}>
-          <button onclick={() => onItemClick( item.id )} type="button">
+        <li class:selected={item.singular === selected}>
+          <button onclick={() => onItemClick( item.singular )} type="button">
             <span>
               <Icon 
                 color={item.primary} 

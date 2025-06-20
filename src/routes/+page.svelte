@@ -19,22 +19,19 @@
   let detail;
   let drawer;
 
+  let catalog = $state();  
   let count = $state( {} );
-  let data = $state();
   let reviews = $state( [] );  
   let searching = $state( false );
-  let settings = $state( {
-    id: crypto.randomUUID(),
-    book: null
-  } );
+  let settings = $state();
   let view = $state( 1 );
 
-  let book = $derived( settings.book );
-  let colors = $derived( data?.tastes.reduce( ( acc, curr ) => {
+  let book = $derived( settings && settings.book ? settings.book : null );
+  let colors = $derived( catalog?.tastes.reduce( ( acc, curr ) => {
     acc[curr.singular] = curr.primary;      
     return acc;
   }, {} ) );
-  let flavor = $derived( book === null ? null : data.tastes[book] );  
+  let flavor = $derived( book === null ? null : catalog.tastes.find( ( data ) => data.singular === book ) );  
   let photos = $derived.by( () => {
     return reviews.reduce( ( acc, curr ) => {
       if( curr.photos !== null ) {
@@ -87,26 +84,26 @@
   onMount( () => {
     fetch( '/flavors.json' )
     .then( ( response ) => response.json() )
-    .then( ( catalog ) => {
+    .then( ( data ) => {
       // console.log( 'MAIN USER' );
       // console.log( db.userId );
-      const active = catalog.tastes.filter( ( item ) => item.active );
+      const active = data.tastes.filter( ( item ) => item.active );
       active.sort( ( a, b ) => {
         if( a.singular > b.singular ) return 1;
         if( a.singular < b.singular ) return -1;    
         return 0;
       } );      
-      catalog.tastes = [... active];
-      data = catalog;
+      data.tastes = [... active];
+      catalog = data;
 
       db.readSettings().then( ( result ) => {
         if( result !== null ) {
           settings = result;
 
-          if( flavor === null ) {
+          if( !settings.book && settings.book === null ) {
             return db.browseReview();          
           } else {
-            return db.browseReview( flavor.singular );          
+            return db.browseReview( settings.book );          
           }
         } else {
           return db.browseReview();          
@@ -152,18 +149,35 @@
     }
   }
 
-  function onBookChange( id ) {
+  async function onBookChange( id ) {
     reviews = [];
 
+    if( !settings ) {
+      settings = await db.createSettings();
+    }
+
+    settings.book = id === null ? null : id;
+    await db.updateSettings( settings );
+    reviews = await db.browseReview( settings.book === null ? null : settings.book );
+
+    /*
     if( id === null ) {
       settings.book = null;
-      db.updateSettings( settings );
+      settings = await db.updateSettings( settings );
+
+      db.updateSettings( settings ).then( ( data ) => {
+        settings = data;
+
+      } );
       db.browseReview().then( ( result ) => reviews = [... result] );
     } else {
-      settings.book = data.tastes.findIndex( ( item ) => item.id === id );
+      console.log( settings );
+
+      settings.book = catalog.tastes.findIndex( ( item ) => item.id === id );
       db.updateSettings( settings );
       db.browseReview( flavor.singular ).then( ( result ) => reviews = [... result] );
     }
+    */
 
     drawer.hide();
   }
@@ -291,16 +305,19 @@
 <Drawer 
   bind:this={drawer}
   {count}
-  items={data && data.tastes ? data.tastes : null} 
+  items={catalog && catalog.tastes ? catalog.tastes : null} 
   onchange={onBookChange} 
-  selected={flavor ? flavor.id : null} />
+  selected={flavor ? flavor.singular : null} />
 
 <Review 
   bind:this={detail}
   flavor={flavor ? flavor : null}
   onchange={onReviewChange} />
 
-<Account bind:this={account} onchange={onReviewChange} />
+<Account 
+  bind:this={account} 
+  onchange={onReviewChange} 
+  tastes={catalog && catalog.tastes ? catalog.tastes : null} />
 
 <style>
   :root {

@@ -105,13 +105,18 @@ export class DexieCloud {
     return this._db.review.toArray().then( ( data ) => data.length );
   }
 
-  createSettings( settings ) {
-    const clone = $state.snapshot( value );
-    
-    clone.created_at = new Date();
-    clone.updated_at = new Date();    
+  createSettings() {
+    const value = {
+      id: crypto.randomUUID(),
+      created_at: new Date(),
+      updated_at: new Date(),
+      book: null,
+      avatar: null,
+      name: null,
+      selected: null
+    };
 
-    return this._db.settings.add( clone );
+    return this._db.settings.add( value ).then( () => this._db.settings.toArray() ).then( ( data ) => data[0] );
   }
 
   readSettings() {

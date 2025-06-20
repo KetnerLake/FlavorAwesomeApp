@@ -41,7 +41,7 @@
     if( onchange ) onchange( {name, value} );
   }
 
-  async function onImageLoad( evt ) {
+  function onImageLoad( evt ) {
     const img = evt.currentTarget;
     const format = img.getAttribute( 'data-type' );    
     const named = img.getAttribute( 'data-name' );

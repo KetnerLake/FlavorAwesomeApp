@@ -5,8 +5,9 @@
   import Icon from "@iconify/svelte";  
   import IconButton from "../IconButton.svelte";
   import Input from "../Input.svelte";
+    import Settings from "./Settings.svelte";
 
-  let {onchange} = $props();
+  let {onchange, tastes} = $props();
 
   let db = new DexieCloud();
   let screen;
@@ -125,52 +126,14 @@
     {/snippet}
   </AppBar>
   <article>
-    {#if ui === 'otp'}
-      <form>
-        <Input 
-          label="OTP" 
-          onchange={( evt ) => otp = evt.value }
-          placeholder="One-time password from email" 
-          --primary-accent-color="#5fb2ff" />    
-        <button onclick={onSignClick} type="button">Sign in</button>
-      </form>      
-    {:else}
-      <img alt="Feature details" />
-      <ul class="upsell">
-        <li>✅ All features</li>
-        <li>✅ All flavors</li>
-        <li>✅ Unlimited reviews</li>
-        <!--
-        <li>✅ Cloud backup</li>
-        <li>✅ Device synchronization</li>
-        -->      
-      </ul>
-      <ul class="steps">
-        <li class="selected">
-          <p>
-            <span>
-              <Icon height="24" icon="mynaui:one-circle-solid" width="24" />
-            </span>
-            Create an<br/>account
-          </p>
-        </li>
-        <li>
-          <p>
-            <span>
-              <Icon height="24" icon="mynaui:two-circle" width="24" />
-            </span>
-            Select<br/>a plan
-          </p>
-        </li>      
-        <li>
-          <p>
-            <span>
-              <Icon height="24" icon="mynaui:three-circle" width="24" />
-            </span>
-            Enjoy the<br/>Awesome
-          </p>
-        </li>      
-      </ul>
+
+    <!-- Collect email/send OTP -->
+    <div class="screen">
+      <figure>
+        <img alt="Feature details" src="/img/secure.svg" />
+      </figure>
+      <h3>Verify Identity</h3>
+      <p>Enter name and email address<br/>to send one-time password.</p>
       <form>
         <Input 
           label="Name" 
@@ -183,9 +146,27 @@
           onchange={( evt ) => email = evt.value} 
           --primary-accent-color="#5fb2ff" />    
         <button onclick={onSendClick} type="button">Send verification</button>
-        <button onclick={onLogoutClick} type="button">Logout</button>        
+
       </form>
-    {/if}
+    </div>
+
+    <!-- Enter OTP -->
+    <div class="screen" style="justify-content: center;">
+      <h3>Verification Code</h3>
+      <p style="padding: 0 16px 0 16px;">A one-time password (OTP/verification) has been sent to the provided email address.</p>
+      <form>
+        <Input 
+          label="OTP" 
+          onchange={( evt ) => otp = evt.value }
+          placeholder="One-time password from email" 
+          --primary-accent-color="#5fb2ff" />    
+        <button onclick={onSignClick} type="button">Sign in</button>
+      </form>
+    </div>      
+
+    <!-- Settings -->
+    <Settings email={db.userId} tastes={tastes} />
+
   </article>
 </section>
 
@@ -194,13 +175,24 @@
     align-items: center;
     display: flex;    
     flex-basis: 0;
-    flex-direction: column;
+    flex-direction: row;
     flex-grow: 1;
-    gap: 16px;    
-    width: 100%;
+    height: 100%;
+    overflow: scroll;
+    padding: 0;  
   }
 
-  button {
+  article > div {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 16px;
+    padding: 16px 0 16px 0;
+    min-width: 100vw;
+  }
+
+  form button {
     align-self: center;
     appearance: none;
     background: #5fb2ff;
@@ -214,9 +206,27 @@
     height: 40px;
     letter-spacing: 0.10px;
     line-height: 20px;
-    margin: 24px 0 24px 0;
+    margin: 0;
     outline: none;
     padding: 0 16px 0 16px;
+    width: 100%;
+  }
+
+  figure {
+    align-items: center;
+    box-sizing: border-box;
+    border: dashed #00000010 4px;
+    border-radius: 16px;
+    display: flex;
+    flex-basis: 0;
+    flex-grow: 1;
+    justify-content: center;
+    margin: 0 16px 0 16px;
+    width: calc( 100vw - 32px );
+  }
+
+  figure img {
+    width: 40vw;
   }
 
   form {
@@ -229,10 +239,18 @@
     width: 100%;
   }
 
-  img {
-    flex-basis: 0;
-    flex-grow: 1;
-  }
+  h3 {
+    box-sizing: border-box;
+    color: var( --primary-text-color );
+    cursor: default;
+    font-family: 'Roboto Variable', sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 28px;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }  
 
   p {
     box-sizing: border-box;
@@ -242,17 +260,10 @@
     font-size: 14px;
     font-weight: 400;
     letter-spacing: 0.50px;
-    line-height: 14px;
+    line-height: 20px;
     margin: 0;
     padding: 0;
     text-align: center;
-  }
-
-  p span {
-    color: var( --primary-text-color );
-    display: block;
-    height: 24px;
-    margin: 0 0 2px 0;
   }
 
   section {
@@ -272,51 +283,5 @@
     transition: top 0.30s ease-in-out;
     width: 100vw;
     z-index: 125;
-  }  
-
-  ul.steps {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    list-style: none;
-    margin: 0;
-    padding: 24px 0 24px;
-    width: 100%;
-  }
-
-  ul.steps li {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    margin: 0;
-    opacity: 0.60;
-    padding: 0;
-  }
-
-  ul.steps li.selected {
-    opacity: 1.0;
-  }
-
-  ul.upsell {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    width: 60%;
-  }
-
-  ul.upsell li {
-    box-sizing: border-box;
-    color: var( --primary-text-color );
-    font-family: 'Roboto Variable', sans-serif;
-    font-size: 16px;
-    font-weight: 400;
-    letter-spacing: 0.50px;
-    line-height: 24px;
-    margin: 0;
-    padding: 0;
   }
 </style>
