@@ -42,6 +42,13 @@
     db.updateSettings( settings );
   }
 
+  function onDeleteClick() {
+    const response = window.confirm( 'Are you sure you want to delete all your data?' );
+    if( response ) {
+      db.deleteReview().then( () => db.deleteSettings() ).then( () => window.location.reload() );
+    }
+  }
+
   onMount( () => {
     settings = db.readSettings().then( ( data ) => data ); 
     console.log( settings );
@@ -90,6 +97,7 @@
       </li>
     {/each}
   </ul>
+  <button class="utility" onclick={onDeleteClick} type="button">Delete all data</button>  
   <button class="utility" onclick={onLogoutClick} type="button">Logout</button>
 </div>
 

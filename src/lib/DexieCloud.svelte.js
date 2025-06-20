@@ -78,7 +78,11 @@ export class DexieCloud {
   }
 
   deleteReview( id ) {
-    return this._db.review.delete( id );
+    if( id === null ) {
+      return this._db.review.clear();
+    } else {
+      return this._db.review.delete( id );
+    }
   }
 
   countReview() {
