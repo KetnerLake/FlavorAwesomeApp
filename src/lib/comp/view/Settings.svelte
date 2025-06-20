@@ -49,6 +49,10 @@
     }
   }
 
+  function onLogoutClick() {
+    alert( 'LOGOUT' );
+  }
+
   onMount( () => {
     settings = db.readSettings().then( ( data ) => data ); 
     console.log( settings );
