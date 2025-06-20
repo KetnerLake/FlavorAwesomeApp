@@ -77,7 +77,7 @@ export class DexieCloud {
     } );
   }
 
-  deleteReview( id ) {
+  deleteReview( id = null ) {
     if( id === null ) {
       return this._db.review.clear();
     } else {

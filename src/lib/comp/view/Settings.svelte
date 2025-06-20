@@ -7,7 +7,7 @@
 
   let {email, name, tastes} = $props();
 
-  let db = new DexieCloud();
+  const db = new DexieCloud();
   
   let settings = $state();
 
@@ -43,7 +43,7 @@
   }
 
   function onDeleteClick() {
-    const response = window.confirm( 'Are you sure you want to delete all your data?' );
+    const response = window.confirm( 'Are you sure you want to delete all of your data?' );
     if( response ) {
       db.deleteReview().then( () => db.deleteSettings() ).then( () => window.location.reload() );
     }
