@@ -117,7 +117,8 @@ export class DexieCloud {
       book: null,
       avatar: null,
       name: null,
-      selected: null
+      selected: null,
+      gps: false
     };
 
     return this._db.settings.add( value ).then( () => this._db.settings.toArray() ).then( ( data ) => data[0] );

@@ -113,10 +113,16 @@
     border-radius: 40px;
     color: #ffffff;
     cursor: pointer;
+    font-family: 'Roboto Variable', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.10px;
+    line-height: 20px;    
     min-height: 40px;
     margin: auto 16px 0 16px;
     outline: none;
     padding: 0;
+    -webkit-tap-highlight-color: transparent;    
   }
 
   div.heading {
@@ -143,6 +149,7 @@
     margin: 0 12px 0 0;
     outline: none;
     padding: 0;
+    -webkit-tap-highlight-color: transparent;    
   }
 
   div.heading h3 {

@@ -5,7 +5,7 @@
     {
       "id": "beer",
       "active": true,
-      "primary": "#ffc727",
+      "primary": "#ffc72c",
       "secondary": "#6f3017",
       "phrase": "Bottles of Beer",
       "singular": "Beer",
@@ -1717,7 +1717,7 @@
     { 
       "id": "cheese",
       "active": true,
-      "primary": "#FBDB65",
+      "primary": "#ffbc0d",
       "secondary": "#C25A00",
       "phrase": "Pieces of Cheese",
       "singular": "Cheese",

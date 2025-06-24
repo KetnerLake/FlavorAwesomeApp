@@ -1,4 +1,6 @@
 <script>
+  import { onMount } from "svelte";
+
   let {
     interactive = false,
     labels = true, 
@@ -9,20 +11,30 @@
     value = []
   } = $props();
 
+  const resize = new ResizeObserver( ( entries ) => {
+    for( let entry of entries ) {
+      if( chart ) {
+        if( interactive ) {
+          svg.setAttributeNS( null, 'viewBox', '-70 -150 140 200' );
+        } else {
+          const chart_bounds = {
+            width: entry.contentRect.width,
+            height: entry.contentRect.height
+          };
+          svg.setAttributeNS( null, 'viewBox', `${0 - ( chart_bounds.width / 2 )} ${0 - ( chart_bounds.height / 2 )} ${chart_bounds.width} ${chart_bounds.height}` );          
+
+          if( chart_bounds.width !== 0 ) {
+            resize.unobserve( chart );
+            resize.disconnect();
+          }
+        }
+      }
+    }
+  } ); 
+
   let svg = $state();
   let chart = $state();
-  let radius = 150;  
-
-  $effect( () => {
-    if( chart ) {
-      if( interactive ) {
-        svg.setAttributeNS( null, 'viewBox', '-70 -150 140 200' );
-      } else {
-        const chart_bounds = chart.getBoundingClientRect();
-        svg.setAttributeNS( null, 'viewBox', `${0 - ( chart_bounds.width / 2 )} ${0 - ( chart_bounds.height / 2 )} ${chart_bounds.width} ${chart_bounds.height}` );
-      }      
-    }
-  } );
+  let radius = 150;   
 
   let path = $derived.by( () => {
     if( value.length === 0 ) {
@@ -31,9 +43,76 @@
 
     const slice = ( 360 / spokes.length ) * ( Math.PI / 180 );
 
+    let coming = false;
+    let going = false;
+    let currently = null;
+    let follow = null;
+
     let d = null;
 
     for( let v = 0; v < value.length; v++ ) {
+      going = false;
+      coming = false;
+      currently = null;
+      follow = null;
+
+      // Skip if no value
+      if( value[v] == 0 ) {
+			  continue;	
+		  } else {
+			  points = polygon( radius[value[v]] );
+			  currently = points[v];
+		  }
+
+      // Something coming?
+		  if( v == 0 ) {
+			  if( value[value.length - 1] == 0 ) {
+				  coming = false;
+			  } else {
+				  coming = true;
+			  }
+		  } else {
+			  if( value[v - 1] == 0 ) {
+				  coming = false;
+			  } else {
+				  coming = true;
+			  }
+		  }      
+
+      // Something going?
+		  if( v == ( value.length - 1 ) ) {
+			  if( value[0] == 0 ) {
+				  going = false;
+			  } else {
+				  going = true;
+				  follow = polygon( radius[value[0]] )[0];
+			  }
+		  } else {
+			  if( value[v + 1] == 0 ) {
+				  going = false;
+			  } else {
+				  going = true;
+				  follow = polygon( radius[value[v + 1]] )[v + 1];						
+			  }
+		  }
+
+      if( !coming && !going ) {
+			  context.fillStyle = '#241F20';
+			  context.strokeStyle = 'rgba( 0, 255, 0, 0 )';
+			  context.lineWidth = 1;
+			  circle( context, points[v].x + 322, points[v].y + 322, 20 );
+			  context.fill();
+		  } else {
+			  if( going ) {
+				  context.beginPath();
+				  context.strokeStyle = '#241F20';
+				  context.lineWidth = lineWidth;				
+				  context.moveTo( points[v].x + 322, points[v].y + 322 );
+				  context.lineTo( follow.x + 322, follow.y + 322 );
+				  context.stroke();
+			  }
+		  }      
+
       const score = value[v] === 0 ? 0.25 : value[v];
       const segment = ( ( radius - 3 ) / maximum ) * score;
       const current = {
@@ -50,6 +129,10 @@
 
     return d + 'Z';
   } );
+
+  onMount( () => {
+    resize.observe( chart );
+  } );  
 
   function placement( index ) {
     let anchor = 'middle'

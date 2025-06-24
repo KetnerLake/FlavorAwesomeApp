@@ -1,5 +1,5 @@
 <script>
-  let {hidden = false, items = [], onchange} = $props();
+  let {gps = true, hidden = false, items = [], onchange} = $props();
 
   // https://www.reddit.com/r/sveltejs/comments/11czcoj/should_i_use_leaflet_with_svelte/
 
@@ -73,6 +73,9 @@
 </svelte:head>
 
 <article class:hidden>
+  {#if !gps}
+    <p>Geolocation is not enabled.</p>
+  {/if}
   <div bind:this={mapElement}></div>
 </article>
 
@@ -81,10 +84,12 @@
     box-sizing: border-box;
     display: flex;
     flex-basis: 0;
+    flex-direction: column;
     flex-grow: 1;
     margin: 0;
     overflow: hidden;
     padding: 0;
+    position: relative;
   }
 
   article.hidden {
@@ -92,7 +97,26 @@
   }
 
   div {
-    width: 100%;
+    height: 100%;
     z-index: 50;
+  }
+
+  p {
+    background: rgba( 255, 255, 255, 0.80 );
+    border-bottom: solid 1px #ffffff10;
+    box-sizing: border-box;
+    color: var( --primary-text-color );
+    cursor: default;
+    font-family: 'Roboto Variable', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    left: 0;
+    letter-spacing: 0.50px;
+    line-height: 20px;
+    margin: 0;
+    right: 0;
+    padding: 10px 16px 10px 16px;
+    position: absolute;
+    z-index: 100;
   }
 </style>

@@ -68,15 +68,15 @@
 </script>
 
 <section bind:this={section}>
-  <article bind:this={scrim} class="scrim">
-    <button onclick={() => hide()} type="button">
+  <button bind:this={scrim} class="scrim" onclick={() => hide()} type="button">
+    <span>
       <Icon 
         color="#ffffff" 
         height="24" 
         icon="material-symbols:cancel-rounded" 
         width="24" />
-    </button>
-  </article>
+    </span>
+  </button>
   <article bind:this={drawer} class="drawer">
     <h3>Flavors</h3>
     <ul>
@@ -159,32 +159,21 @@
     width: calc( 100vw - 48px );
   }
 
-  article.scrim {
+  button.scrim {
     align-items: flex-start;
-    backdrop-filter: blur( 4px );    
+    appearance: none;
+    backdrop-filter: blur( 4px );        
     background: #00000040;
+    border: none;
     box-sizing: border-box;
+    cursor: pointer;
     display: flex;
     flex-basis: 0;
     flex-grow: 1;
     justify-content: flex-end;
     margin: 0;
-    opacity: 0;
-    padding: 0;
-  }
-
-  article.scrim button {
-    align-items: center;
-    appearance: none;
-    background: none;
-    border: none;
-    box-sizing: border-box;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    margin: 4px 0 0 0;
     outline: none;
-    padding: 12px;
+    padding: 16px 12px 0 0;
     -webkit-tap-highlight-color: transparent;                
   }
 

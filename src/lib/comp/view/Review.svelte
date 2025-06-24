@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from "svelte";  
   import AppBar from "../AppBar.svelte";
   import {DexieCloud} from "$lib/DexieCloud.svelte.js";  
   import DateField from "../field/DateField.svelte";
@@ -27,9 +28,11 @@
   let form = $state();
   let readonly = $state( false );
   let screen = $state();
+  let settings = $state();
   let value = $state( null );
 
   let fields = $derived( flavor === null ? null : flavor.fields );
+  let gps = $derived( settings && settings.gps ? settings.gps : null );  
   let title = $derived.by( () => {
     if( value === null || value.id === null ) {
       return `New ${flavor === null ? '' : flavor.singular}`;
@@ -40,7 +43,7 @@
   let valid = $derived( value !== null && value.name !== null ? true : false )
 
   const db = new DexieCloud();
-  
+
   let geolocation = null;
   let latitude = null;
   let longitude = null;
@@ -88,7 +91,10 @@
         easing: 'ease-in-out',
         fill: 'forwards'
       } ).finished.then( () => {
-        geolocation = navigator.geolocation.watchPosition( ( position ) => {
+        geolocation = navigator.geolocation.watchPosition( async ( position ) => {
+          settings.gps = true;
+          await db.updateSettings( settings );          
+
           latitude = position.coords.latitude;
           longitude = position.coords.longitude;
           navigator.geolocation.clearWatch( geolocation );
@@ -101,6 +107,10 @@
             temperature = data.temperature;
             condition = data.condition;
           } );
+        }, ( error ) => {
+          settings.gps = false;
+          geolocation = null;
+          db.updateSettings( settings );
         } );
       } );            
     } else {
@@ -119,6 +129,12 @@
       } );
     }
   }
+
+  onMount( () => {
+    db.readSettings().then( ( result ) => {
+      settings = result;
+    } );
+  } );
 
   async function onCancelClick() {
     if( value === null || value.id === null ) {

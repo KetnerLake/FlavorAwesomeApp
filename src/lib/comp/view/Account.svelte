@@ -122,10 +122,11 @@
     variation="sm" 
     --primary-accent-color="#5fb2ff">
     {#snippet left()}
-      <IconButton name="material-symbols:close" onclick={onCloseClick} />
+      <div class="spacer"></div>
     {/snippet}    
     {#snippet right()}
-      <IconButton name="material-symbols:done" />
+      <IconButton name="material-symbols:close" onclick={onCloseClick} /> 
+      <!-- IF USER: <IconButton name="material-symbols:done" onclick={onCloseClick} /> -->
     {/snippet}
   </AppBar>
   <article>
@@ -149,7 +150,6 @@
           onchange={( evt ) => email = evt.value} 
           --primary-accent-color="#5fb2ff" />    
         <button onclick={onSendClick} type="button">Send verification</button>
-
       </form>
     </div>
 
@@ -195,6 +195,10 @@
     min-width: 100vw;
   }
 
+  div.spacer {
+    min-width: 8px;
+  }
+  
   form button {
     align-self: center;
     appearance: none;

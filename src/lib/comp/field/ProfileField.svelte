@@ -16,7 +16,6 @@
   } = $props();
 
   let dialog = $state();
-  let size = $state();
 
   function onDialogClose() {
     dialog.close();
@@ -49,7 +48,7 @@
         <p>{label}</p>
       </div>
       <div class="chart">
-        <Wheel radius={size / 2} {spokes} value={value === null ? [] : value} />
+        <Wheel {spokes} value={value === null ? [] : value} />
       </div>
     </div>
   {/if}
@@ -64,8 +63,8 @@
       </span>  
       <p>{label}</p>
     </div>
-    <button bind:clientWidth={size} onclick={onProfileClick} type="button">
-      <Wheel radius={size / 2} {spokes} value={value === null ? [] : value} />
+    <button onclick={onProfileClick} type="button">
+      <Wheel {spokes} value={value === null ? [] : value} />
     </button>
   </div>
 
@@ -85,9 +84,10 @@
     border: none;
     box-sizing: border-box;
     cursor: pointer;
-    margin: 0 26px 0 52px;
+    margin: 0 0 0 48px;
     outline: none;
     padding: 0;
+    width: calc( 100% - 48px - 16px );
     -webkit-tap-highlight-color: transparent;            
   }
 
@@ -102,7 +102,7 @@
   div.chart {
     box-sizing: border-box;
     cursor: default;
-    margin: 0 16px 0 52px;
+    margin: 0 16px 0 48px;
     padding: 0;    
   }
 

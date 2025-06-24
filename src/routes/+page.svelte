@@ -24,6 +24,7 @@
   let reviews = $state( [] );  
   let searching = $state( false );
   let settings = $state();
+  let user = $state();
   let view = $state( 1 );
 
   let book = $derived( settings && settings.book ? settings.book : null );
@@ -31,7 +32,7 @@
     acc[curr.singular] = curr.primary;      
     return acc;
   }, {} ) );
-  let flavor = $derived( book === null ? null : catalog.tastes.find( ( data ) => data.singular === book ) );  
+  let flavor = $derived( book === null ? null : catalog.tastes.find( ( data ) => data.singular === book ) );
   let photos = $derived.by( () => {
     return reviews.reduce( ( acc, curr ) => {
       if( curr.photos !== null ) {
@@ -80,6 +81,12 @@
   let theme = $derived( flavor === null ? '#5fb2ff' : flavor.primary );  
 
   const db = new DexieCloud();
+  db.user.subscribe( ( value ) => {
+    if( value ) {
+      user = value.userId;
+      console.log ( `USER (${value.userId}): ` + value.isLoggedIn );
+    }
+  } );
 
   onMount( () => {
     fetch( '/flavors.json' )
@@ -128,12 +135,12 @@
   } );
 
   function onAccountClick() {
-    console.log( 'SHOW ACCOUNT: ' + db.userId );
+    console.log( 'SHOW ACCOUNT: ' + user );
     account.show();
   }
 
   function onAddClick() {
-    if( db.userId === 'unauthorized' ) {
+    if( user === 'unauthorized' ) {
       db.countReviews().then( ( count ) => {
         if( count >= 3 ) {
           const result = confirm( 'Create an account to continue?' );
