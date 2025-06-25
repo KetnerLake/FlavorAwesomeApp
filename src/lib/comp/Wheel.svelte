@@ -36,85 +36,24 @@
   let chart = $state();
   let radius = 150;   
 
+  // Can you believe I wrote the original version of this more than ten years ago?
+  // https://github.com/krhoyt/Adobe/blob/633aa3221c24cd274772ab7532da3ab6fc772622/web/canvas/beer/beer.js#L199
   let path = $derived.by( () => {
-    if( value.length === 0 ) {
+    const count = !spokes || spokes === null ? 16 : spokes.length;
+    const max = !maximum || maximum === null ? 5 : maximum;
+    const slice = ( 360 / count ) * ( Math.PI / 180 );
+    let d = null;    
+
+    if( !value || value.length === 0 ) {
       return '';
     }
 
-    const slice = ( 360 / spokes.length ) * ( Math.PI / 180 );
-
-    let coming = false;
-    let going = false;
-    let currently = null;
-    let follow = null;
-
-    let d = null;
-
     for( let v = 0; v < value.length; v++ ) {
-      going = false;
-      coming = false;
-      currently = null;
-      follow = null;
-
-      // Skip if no value
-      if( value[v] == 0 ) {
-			  continue;	
-		  } else {
-			  points = polygon( radius[value[v]] );
-			  currently = points[v];
-		  }
-
-      // Something coming?
-		  if( v == 0 ) {
-			  if( value[value.length - 1] == 0 ) {
-				  coming = false;
-			  } else {
-				  coming = true;
-			  }
-		  } else {
-			  if( value[v - 1] == 0 ) {
-				  coming = false;
-			  } else {
-				  coming = true;
-			  }
-		  }      
-
-      // Something going?
-		  if( v == ( value.length - 1 ) ) {
-			  if( value[0] == 0 ) {
-				  going = false;
-			  } else {
-				  going = true;
-				  follow = polygon( radius[value[0]] )[0];
-			  }
-		  } else {
-			  if( value[v + 1] == 0 ) {
-				  going = false;
-			  } else {
-				  going = true;
-				  follow = polygon( radius[value[v + 1]] )[v + 1];						
-			  }
-		  }
-
-      if( !coming && !going ) {
-			  context.fillStyle = '#241F20';
-			  context.strokeStyle = 'rgba( 0, 255, 0, 0 )';
-			  context.lineWidth = 1;
-			  circle( context, points[v].x + 322, points[v].y + 322, 20 );
-			  context.fill();
-		  } else {
-			  if( going ) {
-				  context.beginPath();
-				  context.strokeStyle = '#241F20';
-				  context.lineWidth = lineWidth;				
-				  context.moveTo( points[v].x + 322, points[v].y + 322 );
-				  context.lineTo( follow.x + 322, follow.y + 322 );
-				  context.stroke();
-			  }
-		  }      
-
+      // Allow close-to-zero value for zero
+      // Better charting visualization
       const score = value[v] === 0 ? 0.25 : value[v];
-      const segment = ( ( radius - 3 ) / maximum ) * score;
+
+      const segment = ( ( radius - 3 ) / max ) * score;
       const current = {
         x: segment * Math.cos( ( slice * v ) - 1.5708 ),
         y: segment * Math.sin( ( slice * v ) - 1.5708 )

@@ -185,6 +185,7 @@
   }
 
   function onEditClick() {
+    form.scrollTo( {top: 0} );      
     readonly = false;
   }
 

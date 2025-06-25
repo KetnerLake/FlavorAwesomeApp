@@ -3,12 +3,12 @@
 
   let {flavor = null, hidden = false, items = []} = $props();
 
-  const entries = $derived( items.length );
-  const photos = $derived( items.reduce( ( acc, curr ) => {
+  let entries = $derived( items.length );
+  let photos = $derived( items.reduce( ( acc, curr ) => {
     acc = acc + ( curr.photos === null ? 0 : curr.photos.length );
     return acc;
   }, 0 ) );
-  const day = $derived.by( () => {
+  let day = $derived.by( () => {
     if( items.length === 0 ) return null;
 
     const days = {};
@@ -35,7 +35,7 @@
 
     return result;
   } );
-  const time = $derived.by( () => {
+  let time = $derived.by( () => {
     if( items.length === 0 ) return null;
 
     const hours = {};
@@ -63,18 +63,18 @@
     return result;
   } );  
 
-  const ratings = $derived( items.reduce( ( acc, curr ) => {
+  let ratings = $derived( items.reduce( ( acc, curr ) => {
     acc = acc + ( curr.rating === null ? 0 : 1 );
     return acc;
   }, 0 ) );  
-  const average = $derived.by( () => {
+  let average = $derived.by( () => {
     const total = items.reduce( ( acc, curr ) => {
       acc = acc + ( curr.rating === null ? 0 : curr.rating );
       return acc;
     }, 0 );
     return ratings === 0 ? 0 : total / ratings;
   } );
-  const median = $derived.by( () => {
+  let median = $derived.by( () => {
     const range = items.reduce( ( acc, curr ) => {
       if( curr.rating !== null ) {
         acc.push( curr.rating );
@@ -97,7 +97,7 @@
        return range[middle];
      }    
   } );  
-  const mode = $derived.by( () => {
+  let mode = $derived.by( () => {
     const range = items.reduce( ( acc, curr ) => {
       if( curr.rating !== null ) {
         acc.push( curr.rating );
@@ -144,6 +144,40 @@
     }
 
     return [];
+  } );
+  let profiled = $derived.by( () => {
+    if( !items || items === null ) return 0;
+
+    const counter = items.reduce( ( acc, curr ) => {
+      if( curr.profile !== null ) {
+        acc = acc + 1;
+      }
+
+      return acc;
+    }, 0 );
+
+    return counter;
+  } );
+  let chart = $derived.by( () => {
+    if( spokes.length === 0 ) {
+      const blank = new Array( 16 );
+      blank.fill( 0 );
+      return blank;
+    }
+
+    let totals = new Array( spokes.length )
+    totals.fill( 0 );
+
+    for( let i = 0; i < items.length; i++ ) {
+      if( items[i].profile !== null ) {
+        for( let p = 0; p < items[i].profile.length; p++ ) {
+          totals[p] = totals[p] + items[i].profile[p];
+        }
+      }
+    }
+
+    totals = totals.map( ( value ) => value / profiled );
+    return totals;
   } );
 
   function formatDay( value ) {
@@ -210,12 +244,20 @@
     </div>        
   </div>   
   {#if flavor}
-    <h3>Profile</h3>
+    <h3>Profile <span>(average across reviews)</span></h3>
     <div class="wheel">
-      <Wheel {spokes}></Wheel>
+      <Wheel {spokes} value={chart}></Wheel>
     </div>
     <h3>Recommendations</h3>
-    <!-- Recommendations -->
+    {#if !items || items === null || items.length < 3}
+      <div class="recommendations empty">
+        <p>AI-based recommendations will appear here once you have three or more reviews.</p>
+      </div>
+    {:else}
+      <div class="recommendations">
+        <p>List AI results</p>
+      </div>
+    {/if}
   {/if}
 </article>
 
@@ -235,6 +277,38 @@
   article.hidden {
     display: none;
   }
+
+  div.recommendations {
+    box-sizing: border-box;
+    margin: 0 16px 0 16px;
+  }
+
+  div.recommendations.empty {
+    align-items: center;
+    aspect-ratio: 1.0;
+    border: dashed #00000010 4px;
+    border-radius: 16px;    
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0 16px 0 16px;
+    width: calc( 100% - 32px );
+  }
+
+  div.recommendations.empty p {
+    box-sizing: border-box;
+    color: var( --secondary-text-color );
+    cursor: default;
+    font-family: 'Roboto Variable', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.50px;
+    line-height: 20px;
+    margin: 0;
+    padding: 0 32px 0 32px;
+    text-align: center;
+  }  
 
   div.stats {
     box-sizing: border-box;
@@ -268,6 +342,13 @@
     line-height: 28px;    
     margin: 0;
     padding: 16px 16px 0 16px;
+  }
+
+  h3 span {
+    color: var( --secondary-text-color );
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
   }
 
   p {

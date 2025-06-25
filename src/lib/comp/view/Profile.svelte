@@ -28,7 +28,9 @@
   }
 
   function onValueClick( evt ) {
-    if( value === null ) value = new Array( spokes.length );
+    if( value === null ) {
+      value = new Array( spokes.length ).fill( 0 );
+    }
 
     const attribute = parseInt( evt.currentTarget.getAttribute( 'data-value' ) );
 
