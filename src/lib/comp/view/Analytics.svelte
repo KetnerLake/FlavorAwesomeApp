@@ -305,7 +305,7 @@
       body: JSON.stringify( body )
     } )
     .then( ( response ) => response.json() )
-    .then( ( data ) => recommendations = [... data] );
+    .then( ( data ) => recommendations = [... data.recommendations] );
   }
 </script>
 
@@ -391,8 +391,12 @@
       </div>
     {:else}
       <ul {@attach onRecommendAttach()} class="recommendations">
-        {#each recomendations as suggest}
-          <li>{suggest.name}</li>
+        {#each recommendations as suggest}
+          <li>
+            <p>{suggest.name}</p>
+            <p class="description">{suggest.description}</p>
+            <p class="price">Estimated price: ${suggest.price.toFixed( 2 )}</p>
+          </li>
         {/each}
       </ul>
     {/if}
@@ -503,6 +507,10 @@
     padding: 0;
   }
 
+  p.description {
+    font-weight: 400;
+  }
+
   p.label {
     box-sizing: border-box;
     color: var( --secondary-text-color );
@@ -513,10 +521,24 @@
     line-height: 18px;
   }
 
+  p.price {
+    color: var( --secondary-text-color );
+    font-size: 14px;
+    font-weight: 400;
+  }
+
   ul.recommendations {
     box-sizing: border-box;
     list-style: none;
     margin: 0 16px 0 16px;
+    padding: 0;
+  }
+
+  ul.recommendations li {
+    padding: 16px 0 0 0;
+  }
+
+  ul.recommendations li:first-of-type {  
     padding: 0;
   }
 </style>
