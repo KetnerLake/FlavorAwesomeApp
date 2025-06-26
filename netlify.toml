@@ -8,3 +8,4 @@ framework = "#static"
 
 [functions]
 directory = "functions"
+external_node_modules = ["openai", "zod"]

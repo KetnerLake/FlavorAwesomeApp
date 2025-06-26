@@ -3,9 +3,10 @@
   import Switch from "../Switch.svelte";
   import Wheel from "../Wheel.svelte";
 
-  let {flavor = null, hidden = false, items = []} = $props();
+  let {flavor = null, hidden = false, items = [], recomendations = null} = $props();
 
   let all = $state( false );
+  let recommendations = $state( [] );
 
   let first = $derived( items.length > 0 ? items[items.length - 1].created_at : null );
   let last = $derived( items.length > 0 ? items[0].created_at : null );  
@@ -191,6 +192,47 @@
     return filtered;
   } );
 
+  let favorites = $derived.by( () => {
+    if( !items || items === null || items.length === 0 ) return null;
+    return items.filter( ( value ) => value.favorite );
+  } );  
+  let streak = $derived.by( () => {
+    if( !items || items === null || items.length === 0 ) return 0;    
+
+    const dates = items.map( ( value ) => value.created_at );
+    dates.sort( ( a, b ) => {
+      if( a.getTime() > b.getTime() ) return 1;
+      if( a.getTime() < b.getTime() ) return -1;
+      return 0;
+    } );
+
+    let longest = 0;
+    let current = 1;
+
+    for( let d = 1; d < dates.length; d++ ) {
+      const prev = new Date( dates[d - 1].getTime() );
+      const curr = new Date( dates[d].getTime() );
+      
+      const after = new Date( prev.getTime() );
+      after.setDate( after.getDate() + 1 );
+
+      if( 
+        after.getFullYear() === curr.getFullYear() &&
+        after.getMonth() === curr.getMonth() &&
+        after.getDate() === curr.getDate() 
+      ) {
+        current++;
+      } else {
+        longest = Math.max( longest, current );
+        current = 1;
+      }
+    }
+
+    longest = Math.max( longest, current );
+
+    return longest;
+  } );
+
   const db = new DexieCloud();
   db.readSettings().then( ( result ) => {
     all = result.all && result.all[flavor.singular] ? result.all[flavor.singular] : false;
@@ -246,6 +288,25 @@
     } );
     all = value;
   }
+
+  function onRecommendAttach() {
+    const body = {
+      singular: flavor.singular.toLowerCase(),
+      plural: flavor.plural.toLowerCase(),
+      favorites: items.filter( ( value ) => value.favorite ).map( ( value ) => value.name )   
+    };
+    console.log( body );
+
+    fetch( '/api/recommend', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify( body )
+    } )
+    .then( ( response ) => response.json() )
+    .then( ( data ) => recommendations = [... data] );
+  }
 </script>
 
 <article class:hidden>
@@ -279,6 +340,14 @@
       <p>{photos}</p>      
       <p class="label">Reviews with photos</p>
     </div>
+    <div>
+      <p>{favorites ? favorites.length : 0}</p>      
+      <p class="label">Favorite reviews</p>
+    </div>  
+    <div>
+      <p>{streak}</p>      
+      <p class="label">Longest daily streak</p>
+    </div>  
     <div>
       <p>{day === null ? 'TBD' : formatDay( day )}</p>      
       <p class="label">Average review day</p>
@@ -316,14 +385,16 @@
       <Wheel {spokes} value={all ? charts : chart}></Wheel>
     </div>
     <h3>Recommendations</h3>
-    {#if !items || items === null || items.length < 3}
+    {#if favorites < 3}
       <div class="recommendations empty">
-        <p>AI-based recommendations will appear here once you have three or more reviews.</p>
+        <p>AI-based recommendations will appear here once you have three or more favorite reviews.</p>
       </div>
     {:else}
-      <div class="recommendations">
-        <p>List AI results</p>
-      </div>
+      <ul {@attach onRecommendAttach()} class="recommendations">
+        {#each recomendations as suggest}
+          <li>{suggest.name}</li>
+        {/each}
+      </ul>
     {/if}
   {/if}
 </article>
@@ -350,11 +421,6 @@
     display: flex;
     flex-direction: row;
     padding: 16px 16px 0 0;
-  }
-
-  div.recommendations {
-    box-sizing: border-box;
-    margin: 0 16px 0 16px;
   }
 
   div.recommendations.empty {
@@ -445,5 +511,12 @@
     font-weight: 400;
     letter-spacing: 0.50px;
     line-height: 18px;
+  }
+
+  ul.recommendations {
+    box-sizing: border-box;
+    list-style: none;
+    margin: 0 16px 0 16px;
+    padding: 0;
   }
 </style>
