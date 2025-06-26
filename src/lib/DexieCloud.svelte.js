@@ -114,6 +114,7 @@ export class DexieCloud {
       id: crypto.randomUUID(),
       created_at: new Date(),
       updated_at: new Date(),
+      all: null,
       book: null,
       avatar: null,
       name: null,

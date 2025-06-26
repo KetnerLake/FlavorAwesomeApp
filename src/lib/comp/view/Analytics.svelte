@@ -1,8 +1,14 @@
 <script>
+  import { DexieCloud } from "$lib/DexieCloud.svelte";
+  import Switch from "../Switch.svelte";
   import Wheel from "../Wheel.svelte";
 
   let {flavor = null, hidden = false, items = []} = $props();
 
+  let all = $state( false );
+
+  let first = $derived( items.length > 0 ? items[items.length - 1].created_at : null );
+  let last = $derived( items.length > 0 ? items[0].created_at : null );  
   let entries = $derived( items.length );
   let photos = $derived( items.reduce( ( acc, curr ) => {
     acc = acc + ( curr.photos === null ? 0 : curr.photos.length );
@@ -179,6 +185,24 @@
     totals = totals.map( ( value ) => value / profiled );
     return totals;
   } );
+  let charts = $derived.by( () => {
+    const filtered = items.filter( ( value ) => value.profile === null ? false : true ).map( ( value ) => value.profile );
+    filtered.push( chart );
+    return filtered;
+  } );
+
+  const db = new DexieCloud();
+  db.readSettings().then( ( result ) => {
+    all = result.all && result.all[flavor.singular] ? result.all[flavor.singular] : false;
+  } );  
+
+  function formatDate( value ) {
+    return new Intl.DateTimeFormat( navigator.language, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    } ).format( value );
+  }
 
   function formatDay( value ) {
     const date = new Date();
@@ -192,51 +216,91 @@
     return weekday.format( date );
   }
 
-  function formatTime( value ) {
+  function formatTime( hours, minutes = null ) {
     const today = new Date();
     const date = new Date();
-    date.setHours( value );
+    date.setHours( hours );
     
-    return date.toLocaleTimeString( navigator.language, {
+    const options = {
       hour: 'numeric', 
-      hour12: true 
+      hour12: true
+    };
+
+    if( minutes !== null ) {
+      options.minute = '2-digit';
+      date.setMinutes( minutes );
+    }
+
+    return date.toLocaleTimeString( navigator.language, options );
+  }
+
+  function onAllChange( value ) {
+    db.readSettings().then( ( result ) => {
+      if( !result.all ) {
+        result.all = {};
+      }
+      
+      result.all[flavor.singular] = value;
+
+      return db.updateSettings( result );
     } );
+    all = value;
   }
 </script>
 
 <article class:hidden>
   <h3>At a Glance</h3>
   <div class="stats">
+    <div style="grid-column: span 2;">
+      <p>
+        {#if first === null}
+          None
+        {:else}
+          {formatDate( first )} @ {formatTime( first.getHours(), first.getMinutes() )}
+        {/if}
+      </p>
+      <p class="label">First review</p>
+    </div>
+    <div style="grid-column: span 2;">
+      <p>
+        {#if first === null}
+          None
+        {:else}
+          {formatDate( last )} @ {formatTime( last.getHours(), last.getMinutes() )}
+        {/if}        
+      </p>
+      <p class="label">Most recent review</p>
+    </div>
     <div>
       <p>{entries}</p>      
-      <p class="label">Entries</p>
+      <p class="label">Reviews made</p>
     </div>
     <div>
       <p>{photos}</p>      
-      <p class="label">Photos</p>
+      <p class="label">Reviews with photos</p>
     </div>
     <div>
       <p>{day === null ? 'TBD' : formatDay( day )}</p>      
-      <p class="label">Day of posts</p>
+      <p class="label">Average review day</p>
     </div>
     <div>
       <p>{time === null ? 'TBD' : formatTime( time )}</p>      
-      <p class="label">Time of posts</p>
+      <p class="label">Average review time</p>
     </div>        
   </div>
   <h3>Ratings</h3>
   <div class="stats">
     <div>
       <p>{ratings}</p>
-      <p class="label">Ratings</p>      
+      <p class="label">Reviews with ratings</p>      
     </div>
     <div>
       <p>{average.toFixed( 2 )}</p>      
-      <p class="label">Average</p>
+      <p class="label">Average rating</p>
     </div>
     <div>
       <p>{median.toFixed( 2 )}</p>      
-      <p class="label">Middle</p>
+      <p class="label">Middle rating</p>
     </div>    
     <div>
       <p>{mode.length === 0 ? '0' : mode.join( ', ' )}</p>      
@@ -244,9 +308,12 @@
     </div>        
   </div>   
   {#if flavor}
-    <h3>Profile <span>(average across reviews)</span></h3>
+    <div class="profile">
+      <h3>Profile</h3>
+      <Switch onchange={onAllChange} label="Show all" selected={all} />
+    </div>
     <div class="wheel">
-      <Wheel {spokes} value={chart}></Wheel>
+      <Wheel {spokes} value={all ? charts : chart}></Wheel>
     </div>
     <h3>Recommendations</h3>
     {#if !items || items === null || items.length < 3}
@@ -276,6 +343,13 @@
 
   article.hidden {
     display: none;
+  }
+
+  div.profile {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    padding: 16px 16px 0 0;
   }
 
   div.recommendations {
@@ -344,11 +418,10 @@
     padding: 16px 16px 0 16px;
   }
 
-  h3 span {
-    color: var( --secondary-text-color );
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 20px;
+  div.profile h3 {
+    flex-basis: 0;
+    flex-grow: 1;
+    padding: 0 0 0 16px;
   }
 
   p {

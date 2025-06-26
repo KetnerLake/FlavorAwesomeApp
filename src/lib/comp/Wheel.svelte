@@ -36,30 +36,28 @@
   let chart = $state();
   let radius = 150;   
 
-  // Can you believe I wrote the original version of this more than ten years ago?
-  // https://github.com/krhoyt/Adobe/blob/633aa3221c24cd274772ab7532da3ab6fc772622/web/canvas/beer/beer.js#L199
-  let path = $derived.by( () => {
+  function path( profile ) {
     const count = !spokes || spokes === null ? 16 : spokes.length;
     const max = !maximum || maximum === null ? 5 : maximum;
     const slice = ( 360 / count ) * ( Math.PI / 180 );
     let d = null;    
 
-    if( !value || value.length === 0 ) {
+    if( !profile || profile.length === 0 ) {
       return '';
     }
 
-    for( let v = 0; v < value.length; v++ ) {
+    for( let p = 0; p < profile.length; p++ ) {
       // Allow close-to-zero value for zero
       // Better charting visualization
-      const score = value[v] === 0 ? 0.25 : value[v];
+      const score = profile[p] === 0 ? 0.25 : profile[p];
 
       const segment = ( ( radius - 3 ) / max ) * score;
       const current = {
-        x: segment * Math.cos( ( slice * v ) - 1.5708 ),
-        y: segment * Math.sin( ( slice * v ) - 1.5708 )
+        x: segment * Math.cos( ( slice * p ) - 1.5708 ),
+        y: segment * Math.sin( ( slice * p ) - 1.5708 )
       };
 
-      if( v === 0 ) {
+      if( p === 0 ) {
         d = `M ${current.x} ${current.y} `;
       } else {
         d = d + `L ${current.x} ${current.y} `;
@@ -67,7 +65,7 @@
     }
 
     return d + 'Z';
-  } );
+  }
 
   onMount( () => {
     resize.observe( chart );
@@ -154,7 +152,13 @@
         {/each}      
       </g>
     {/if}
-    <path d={path} />
+    {#if value.length > 0 && Array.isArray( value[0] )}
+      {#each value as profile}
+        <path d={path( profile )} />
+      {/each}
+    {:else}
+      <path class="only" d={path ( value )} />
+    {/if}
   </g>
 </svg>
 
@@ -179,11 +183,25 @@
   }
 
   path {
-    fill: rgb( from var( --primary-text-color ) r g b / 0.12 );
+    fill: none;
     stroke: var( --primary-text-color );
     stroke-linecap: round;
     stroke-linejoin: round;    
     stroke-width: 3px;
+    opacity: 0.20;
+  }
+
+  path:last-of-type {
+    fill: rgb( from var( --primary-text-color ) r g b / 0.12 );
+    stroke: var( --primary-accent-color );
+    stroke-linecap: round;
+    stroke-linejoin: round;    
+    stroke-width: 3px;    
+    opacity: 1.0;
+  }
+
+  path.only {
+    stroke: var( --primary-text-color );
   }
 
   svg {
