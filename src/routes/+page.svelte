@@ -6,7 +6,7 @@
   import AppBar from "$lib/comp/AppBar.svelte";
   import {DexieCloud} from "$lib/DexieCloud.svelte.js";
   import Drawer from "$lib/comp/view/Drawer.svelte";  
-  import Icon from '@iconify/svelte';  
+  import Icon, { replaceIDs } from '@iconify/svelte';  
   import IconButton from "$lib/comp/IconButton.svelte";
   import Map from "$lib/comp/view/Map.svelte";
   import NavigationBar from "$lib/comp/NavigationBar.svelte";
@@ -21,6 +21,7 @@
 
   let catalog = $state();  
   let count = $state( {} );
+  let recommendations = $state( [] );
   let reviews = $state( [] );  
   let searching = $state( false );
   let settings = $state();
@@ -120,7 +121,8 @@
         return db.countReview();
       } ).then( ( result ) => {
         count = result;
-      } );
+        return db.readRecommendations( flavor.singular );
+      } ).then( ( result ) => recommendations = [... result] );
     } );
   } );
 
@@ -197,8 +199,39 @@
     detail.show( id );
   }
 
-  function onReviewChange() {
-    db.browseReview( flavor.singular ).then( ( result ) => reviews = [... result] );
+  function onReviewChange( favorite = false ) {
+    db.browseReview( flavor.singular ).then( ( result ) => {
+      reviews = [... result];
+      
+      if( favorite ) {
+        const favorites = reviews.reduce( ( acc, curr ) => {
+          if( curr.favorite ) acc.push( curr.name );
+          return acc;
+        }, [] );
+
+        if( favorites.length >= 3 ) {
+          fetch( '/api/recommend', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify( {
+              singular: flavor.singular.toLowerCase(),
+              plural: flavor.plural.toLowerCase(),
+              favorites
+            } )
+          } )
+          .then( ( response ) => response.json() )
+          .then( ( result ) => {
+            return db.updateRecommendations( flavor.singular, result.recommendations );
+          } )
+          .then( ( result ) => recommendations = [... result] );          
+        } else {
+          recommendations = [];
+          db.updateRecommendations( flavor.singular, null );
+        }
+      }
+    } );
     db.countReview().then( ( result ) => count = result );
   }
 
@@ -268,7 +301,11 @@
   </NavigationBar>  
 
   {#if view === 0}
-    <Analytics {flavor} hidden={view === 0 ? false : true} items={reviews} />      
+    <Analytics 
+      {flavor} 
+      hidden={view === 0 ? false : true} 
+      items={reviews}
+      recommendations={recommendations} />      
   {:else if view === 1}
     <Timeline items={reviews} onchange={onTimelineChange}>
       <div class="empty">

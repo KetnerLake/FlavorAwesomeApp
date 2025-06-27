@@ -1,12 +1,17 @@
 <script>
   import { DexieCloud } from "$lib/DexieCloud.svelte";
+  import { onMount } from "svelte";
   import Switch from "../Switch.svelte";
   import Wheel from "../Wheel.svelte";
 
-  let {flavor = null, hidden = false, items = [], recomendations = null} = $props();
+  let {
+    flavor = null, 
+    hidden = false, 
+    items = [], 
+    recommendations = []
+  } = $props();
 
   let all = $state( false );
-  let recommendations = $state( [] );
 
   let first = $derived( items.length > 0 ? items[items.length - 1].created_at : null );
   let last = $derived( items.length > 0 ? items[0].created_at : null );  
@@ -234,9 +239,12 @@
   } );
 
   const db = new DexieCloud();
-  db.readSettings().then( ( result ) => {
-    all = result.all && result.all[flavor.singular] ? result.all[flavor.singular] : false;
-  } );  
+
+  onMount( () => {
+    db.readSettings().then( ( result ) => {
+      all = result.all && result.all[flavor.singular] ? result.all[flavor.singular] : false;
+    } );  
+  } );
 
   function formatDate( value ) {
     return new Intl.DateTimeFormat( navigator.language, {
@@ -287,25 +295,6 @@
       return db.updateSettings( result );
     } );
     all = value;
-  }
-
-  function onRecommendAttach() {
-    const body = {
-      singular: flavor.singular.toLowerCase(),
-      plural: flavor.plural.toLowerCase(),
-      favorites: items.filter( ( value ) => value.favorite ).map( ( value ) => value.name )   
-    };
-    console.log( body );
-
-    fetch( '/api/recommend', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify( body )
-    } )
-    .then( ( response ) => response.json() )
-    .then( ( data ) => recommendations = [... data.recommendations] );
   }
 </script>
 
@@ -385,12 +374,12 @@
       <Wheel {spokes} value={all ? charts : chart}></Wheel>
     </div>
     <h3>Recommendations</h3>
-    {#if favorites < 3}
+    {#if recommendations.length === 0}
       <div class="recommendations empty">
         <p>AI-based recommendations will appear here once you have three or more favorite reviews.</p>
       </div>
     {:else}
-      <ul {@attach onRecommendAttach()} class="recommendations">
+      <ul class="recommendations">
         {#each recommendations as suggest}
           <li>
             <p>{suggest.name}</p>
@@ -529,16 +518,17 @@
 
   ul.recommendations {
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
     list-style: none;
     margin: 0 16px 0 16px;
     padding: 0;
   }
 
   ul.recommendations li {
-    padding: 16px 0 0 0;
-  }
-
-  ul.recommendations li:first-of-type {  
-    padding: 0;
+    background: rgb( from var( --primary-accent-color ) r g b / 0.12 );
+    border-radius: 16px;
+    padding: 16px;
   }
 </style>

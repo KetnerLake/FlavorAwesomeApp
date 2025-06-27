@@ -194,9 +194,7 @@
     db.favoriteReview( value.id, value.favorite ).then( ( data ) =>  {
       value = data;
 
-      if( onchange ) {
-        onchange();
-      }
+      if( onchange ) onchange( true );
     } );
   }
 

@@ -4,9 +4,10 @@ import dexieCloud from "dexie-cloud-addon";
 export class DexieCloud {
   constructor() {
     this._db = new Dexie( 'FlavorAwesome', {addons: [dexieCloud]} );
-    this._db.version( 20 ).stores( {
+    this._db.version( 40 ).stores( {
       review: 'id, created_at, updated_at, type',
-      settings: 'id'
+      settings: 'id',
+      recommendations: '&id, type'
     } );    
     this._db.cloud.configure( {
       customLoginGui: true,
@@ -47,6 +48,11 @@ export class DexieCloud {
         } );
       }
     }
+  }
+
+  browseReviewByFavorite( flavor = null ) {
+    this.browseReview( flavor )
+    .then( ( data ) => data.filter( ( value ) => value.favorite ) );
   }
 
   readReview( id ) {
@@ -144,6 +150,28 @@ export class DexieCloud {
 
   deleteSettings() {
     return this._db.settings.clear();
+  }
+
+  readRecommendations( flavor = null ) {
+    if( flavor === null ) return [];
+    return this._db.recommendations.where( 'type' ).equals( flavor ).toArray();
+  }
+
+  updateRecommendations( flavor = null, data = null ) {
+    if( flavor === null ) return [];
+
+    if( data === null ) {
+      return this._db.recommendations.where( 'type' ).equals( flavor ).delete().then( () => [] );
+    } else {
+      for( let d = 0; d < data.length; d++ ) {
+        data[d].id = crypto.randomUUID();
+        data[d].type = flavor;
+      }
+
+      return this._db.recommendations.where( 'type' ).equals( flavor ).delete()
+        .then( () => this._db.recommendations.bulkPut( data ) )
+        .then( () => this._db.recommendations.toArray() );
+    }
   }
 
   login( email ) {
