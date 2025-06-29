@@ -13,7 +13,7 @@
 </script>
 
 <div class:bottom class:top>
-  <span class:noicon={!icon}>
+  <span class:noicon={!icon || icon === null}>
     <Icon 
       height="24" 
       {icon}
@@ -32,6 +32,7 @@
     display: flex;
     flex-direction: row;
     padding: 12px 0 11px 0;
+    width: 100%;
   }
 
   div.bottom {
@@ -76,6 +77,6 @@
 
   span.noicon {
     padding: 0;
-    width: 48px;
+    min-width: 48px;
   }
 </style>

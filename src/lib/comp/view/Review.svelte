@@ -19,6 +19,7 @@
   import SliderField from "../field/SliderField.svelte";
   import TextField from "../field/TextField.svelte";
   import UnitsField from "../field/UnitsField.svelte";
+    import Icon from "@iconify/svelte";
     
   let {
     flavor = null, 
@@ -26,6 +27,7 @@
   } = $props();
 
   let form = $state();
+  let open = $state( false );
   let readonly = $state( false );
   let screen = $state();
   let settings = $state();
@@ -58,6 +60,7 @@
       clean[fields[f].name] = null;
     }
 
+    open = false;
     value = clean;
   }
 
@@ -258,7 +261,42 @@
             onchange={onFieldChange} 
             placeholder={field.hint === null ? field.label : field.hint} 
             {readonly} 
-            value={value && value[field.name] ? value[field.name] : null} />  
+            value={value && value[field.name] ? value[field.name] : null} />            
+        {:else if field.kind === 'detail'}                
+          <details open={open || readonly}>
+            <summary>
+              <TextField 
+                icon={field.icon} 
+                label={field.label} 
+                name={field.name} 
+                onchange={onFieldChange} 
+                placeholder={field.hint === null ? field.label : field.hint} 
+                {readonly} 
+                value={value && value[field.name] ? value[field.name] : null}>
+                <button 
+                  aria-label="Expand" 
+                  onclick={() => open = !open} 
+                  type="button">
+                  <Icon 
+                    height="24" 
+                    icon="material-symbols:arrow-drop-down-rounded" 
+                    width="24" />
+                </button>
+              </TextField>  
+            </summary>
+            <div style:gap={readonly ? 0 : '16px'} style:padding={readonly ? 0 : '16px 0 0 0'}>
+              {#each field.options as detail}
+                <TextField 
+                  icon={detail.icon} 
+                  label={detail.label} 
+                  name={detail.name} 
+                  onchange={onFieldChange} 
+                  placeholder={detail.hint === null ? detail.label : detail.hint} 
+                  {readonly} 
+                  value={value && value[detail.name] ? value[detail.name] : null} />
+              {/each}
+            </div>
+          </details>
         {:else if field.kind === 'decimal'} 
           <DecimalField 
             icon={field.icon} 
@@ -395,6 +433,44 @@
 </section>
 
 <style>
+  details summary button {
+    align-items: center;
+    appearance: none;
+    background: var( --primary-accent-color );
+    border: none;
+    border-radius: 40px;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    height: 40px;
+    justify-content: center;
+    margin: 0 0 0 16px;
+    outline: none;
+    padding: 0;
+    transition: rotate 300ms ease-in-out;
+    width: 40px;
+    -webkit-tap-highlight-color: transparent;    
+  }
+
+  details[open] summary button {
+    rotate: 180deg;
+  }
+
+  details div {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 0 0 0;
+  }
+
+  details summary {
+    align-items: center;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+  }
+
   form {
     box-sizing: border-box;
     display: flex;

@@ -287,47 +287,40 @@
           "hint": null,
           "icon": "material-symbols:flag-outline",
           "is-key": true,
-          "kind": "text",
+          "kind": "detail",
           "label": "Origin",
           "name": "origin",
-          "options": [
-            "wrapper",
-            "binder",
-            "filler"
-          ]
-        },
-        {
-          "cancelable": true,
-          "hidden": true,
-          "hint": "Outside layer of tobacco",
-          "icon": null,
-          "is-key": true,
-          "kind": "text",
-          "label": "Wrapper",
-          "name": "wrapper",
-          "options": null
-        },
-        {
-          "cancelable": true,
-          "hidden": true,
-          "hint": "Holds filler tobacco together",
-          "icon": null,
-          "is-key": true,
-          "kind": "text",
-          "label": "Binder",
-          "name": "binder",
-          "options": null
-        },
-        {
-          "cancelable": true,
-          "hidden": true,
-          "hint": "Tobacco at the center of a cigar",
-          "icon": null,
-          "is-key": true,
-          "kind": "text",
-          "label": "Filler",
-          "name": "filler",
-          "options": null
+          "options": [{
+            "cancelable": true,
+            "hidden": true,
+            "hint": "Outside layer of tobacco",
+            "icon": null,
+            "is-key": true,
+            "kind": "text",
+            "label": "Wrapper",
+            "name": "wrapper",
+            "options": null            
+          }, {
+            "cancelable": true,
+            "hidden": true,
+            "hint": "Holds filler tobacco together",
+            "icon": null,
+            "is-key": true,
+            "kind": "text",
+            "label": "Binder",
+            "name": "binder",
+            "options": null
+          }, {
+            "cancelable": true,
+            "hidden": true,
+            "hint": "Tobacco at the center of a cigar",
+            "icon": null,
+            "is-key": true,
+            "kind": "text",
+            "label": "Filler",
+            "name": "filler",
+            "options": null            
+          }]
         },
         {
           "cancelable": true,

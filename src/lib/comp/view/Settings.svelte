@@ -50,7 +50,7 @@
   }
 
   function onLogoutClick() {
-    alert( 'LOGOUT' );
+    db.logout();
   }
 
   onMount( () => {

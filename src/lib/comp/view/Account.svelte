@@ -7,7 +7,7 @@
   import Input from "../Input.svelte";
     import Settings from "./Settings.svelte";
 
-  let {onchange, tastes} = $props();
+  let {onchange, tastes, user} = $props();
 
   let db = new DexieCloud();
   let screen;
@@ -16,7 +16,10 @@
   let interaction = $state( null );
   let name = $state( null );
   let otp = $state( null );
+  
+  let logged_in = $derived( user === 'unauthorized' ? false : true );
   let ui = $derived( interaction === null ? 'sign_in' : interaction.type );
+
 
   export function hide() {
     return screen.animate( [
@@ -44,22 +47,18 @@
   }  
 
   onMount( () => {
-    console.log( 'CURRENT' );
-    console.log( db.userId );
-
     db.ui.subscribe( ( o ) => {
       console.log( 'INTERACTION' );
       console.log( o );
       if( o === undefined ) {
-        console.log( 'INTERACTION:USER' )
-        console.log( db.userId );
-
-        if( db.userId !== 'unauthorized' ) {
+        if( logged_in ) {
           console.log( 'INTERACTION: LOGGED IN' );
+          /*
           db.sync().then( () => {
             console.log( 'INTERACTION: INITIAL SYNC' );
             if( onchange ) onchange();
           } );
+          */
         }
 
         interaction = null;
@@ -102,10 +101,6 @@
 
     console.log( 'SEND: ' + email );
     db.login( email );
-  }
-
-  function onLogoutClick() {
-    db.logout();
   }
 
   function onSignClick() {
@@ -168,7 +163,7 @@
     </div>      
 
     <!-- Settings -->
-    <Settings email={db.userId} tastes={tastes} />
+    <Settings email={user} tastes={tastes} />
 
   </article>
 </section>

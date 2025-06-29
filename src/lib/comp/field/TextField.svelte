@@ -4,6 +4,7 @@
   import LabelField from "./LabelField.svelte";
 
   let {
+    children,
     gap = true, 
     icon, 
     label, 
@@ -31,6 +32,7 @@
       <Icon height="24" icon={icon} width="24" />
     </span>
     <Input {label} onchange={onInputChange} {placeholder} {suffix} {value} />
+    {@render children?.()}
   </div>
 {/if}
 
@@ -39,7 +41,9 @@ div {
     align-items: center;
     box-sizing: border-box;
     display: flex;
+    flex-basis: 0;
     flex-direction: row;
+    flex-grow: 1;
     padding: 0 16px 0 0;
   }
 

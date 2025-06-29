@@ -180,7 +180,7 @@ export class DexieCloud {
   }
 
   logout() {
-    this._db.cloud.logout();
+    return this._db.cloud.logout();
   }
 
   sync() {
