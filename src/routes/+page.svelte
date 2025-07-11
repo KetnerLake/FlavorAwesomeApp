@@ -9,6 +9,7 @@
   import Icon, { replaceIDs } from '@iconify/svelte';  
   import IconButton from "$lib/comp/IconButton.svelte";
   import Map from "$lib/comp/view/Map.svelte";
+  import Message from '$lib/comp/view/Message.svelte';
   import NavigationBar from "$lib/comp/NavigationBar.svelte";
   import NavigationItem from "$lib/comp/NavigationItem.svelte";
   import Photos from "$lib/comp/view/Photos.svelte";
@@ -18,14 +19,16 @@
   let account;
   let detail;
   let drawer;
+  let message;
 
   let catalog = $state();  
   let count = $state( {} );
+  let logged = $state( false );
   let recommendations = $state( [] );
   let reviews = $state( [] );  
   let searching = $state( false );
   let settings = $state();
-  let user = $state();
+  let user = $state( null );
   let view = $state( 1 );
 
   let book = $derived( settings && settings.book ? settings.book : null );
@@ -85,7 +88,19 @@
   db.user.subscribe( ( value ) => {
     if( value ) {
       user = value.userId;
-      console.log ( `USER (${value.userId}): ` + value.isLoggedIn );
+      logged = value.isLoggedIn;
+      console.log ( `MAIN USER (${value.userId}): ` + value.isLoggedIn );      
+
+      if( logged ) {
+        db.sync().then( () => {
+          loadContent();
+        } );
+      } else {
+        if( settings ) {
+          settings.book = null;
+          db.updateSettings( settings ).then( () => loadContent() );
+        }
+      }
     }
   } );
 
@@ -104,26 +119,16 @@
       data.tastes = [... active];
       catalog = data;
 
-      db.readSettings().then( ( result ) => {
-        if( result !== null ) {
-          settings = result;
-
-          if( !settings.book && settings.book === null ) {
-            return db.browseReview();          
-          } else {
-            return db.browseReview( settings.book );          
-          }
-        } else {
-          return db.browseReview();          
-        }
-      } ).then( ( result ) => {
-        reviews = [... result];
-        return db.countReview();
-      } ).then( ( result ) => {
-        count = result;
-        return db.readRecommendations( flavor.singular );
-      } ).then( ( result ) => recommendations = [... result] );
+      loadContent();
     } );
+
+    const query = window.location.search;
+    const params = new URLSearchParams( query );
+    const mode = params.get( 'mode' );
+
+    if( mode === 'success' ) {
+      account.show( mode );
+    }
   } );
 
   $effect( () => {
@@ -135,6 +140,28 @@
       document.documentElement.style.setProperty( '--secondary-accent-color', '#003f7f' );      
     }
   } );
+
+  function loadContent() {
+    return db.readSettings().then( ( result ) => {
+      if( result !== null ) {
+        settings = result;
+
+        if( !settings.book && settings.book === null ) {
+          return db.browseReview();          
+        } else {
+          return db.browseReview( settings.book );          
+        }
+      } else {
+        return db.browseReview();          
+      }
+    } ).then( ( result ) => {
+      reviews = [... result];
+      return db.countReview();
+    } ).then( ( result ) => {
+      count = result;
+      return db.readRecommendations( flavor.singular );
+    } ).then( ( result ) => recommendations = [... result] );    
+  }
 
   function onAccountClick() {
     console.log( 'SHOW ACCOUNT: ' + user );
@@ -193,6 +220,10 @@
 
   function onMapChange( id ) {
     detail.show( id );
+  }
+
+  function onMessageClick() {
+    message.show();
   }
 
   function onPhotosChange( id ) {
@@ -263,105 +294,115 @@
   <meta content={theme} name="theme-color" />
 </svelte:head>
 
-<section>
-  <AppBar 
-    label={flavor ? flavor.phrase : 'Flavor Awesome'} 
-    oncancel={onSearchCancel} 
-    onchange={onSearchChange} 
-    subtitle={subtitle} 
-    variation={searching ? 'search' : null}>
-    {#snippet left()}
-      <IconButton name="material-symbols:menu" onclick={() => drawer.show()} />
-    {/snippet}
-    {#snippet right()}
-      <IconButton name="material-symbols:search" onclick={onSearchClick} />
-      <IconButton 
-        name="material-symbols:account-circle" 
-        onclick={onAccountClick} />      
-    {/snippet}
-  </AppBar>
+<main>
 
-  <NavigationBar>
-    <NavigationItem
-      active={view === 0 ? true : false}  
-      icon="material-symbols:book-ribbon-outline-rounded" 
-      onclick={() => view = 0} />
-    <NavigationItem
-      active={view === 1 ? true : false}  
-      onclick={() => view = 1} 
-      label="Timeline" />
-    <NavigationItem
-      active={view === 2 ? true : false}  
-      label="Photos" 
-      onclick={() => view = 2} />
-    <NavigationItem
-      active={view === 3 ? true : false}  
-      label="Map"
-      onclick={() => view = 3} />     
-  </NavigationBar>  
+  <section>
+    <AppBar 
+      label={flavor ? flavor.phrase : 'Flavor Awesome'} 
+      oncancel={onSearchCancel} 
+      onchange={onSearchChange} 
+      subtitle={subtitle} 
+      variation={searching ? 'search' : null}>
+      {#snippet left()}
+        <IconButton name="material-symbols:menu" onclick={() => drawer.show()} />
+      {/snippet}
+      {#snippet right()}
+        <IconButton name="material-symbols:search" onclick={onSearchClick} />
+        <IconButton 
+          name="material-symbols:account-circle" 
+          onclick={onAccountClick} />      
+      {/snippet}
+    </AppBar>
 
-  {#if view === 0}
-    <Analytics 
-      {flavor} 
-      hidden={view === 0 ? false : true} 
-      items={reviews}
-      recommendations={recommendations} />      
-  {:else if view === 1}
-    <Timeline items={reviews} onchange={onTimelineChange}>
-      <div class="empty">
-        {#if flavor}
-          <p>Empty Timeline</p>
-          <p>Add a review to get started!</p>
-        {:else}
-          <p>Select a flavor to get started!</p>
-          <button 
-            class="m3"
-            onclick={() => drawer.show()} 
-            type="button">
-            Select a flavor
-          </button>          
-        {/if}
-      </div>
-    </Timeline>
-  {:else if view === 2}
-    <Photos items={photos} onchange={onPhotosChange}>
-      <div class="empty">
-        <p class="photos">Empty Photos</p>
-        <p class="photos">There are no reviews with photos.</p>                
-      </div>
-    </Photos>
-  {:else if view === 3}
-    <Map items={places} onchange={onMapChange} />  
-  {/if}
+    <NavigationBar>
+      <NavigationItem
+        active={view === 0 ? true : false}  
+        icon="material-symbols:book-ribbon-outline-rounded" 
+        onclick={() => view = 0} />
+      <NavigationItem
+        active={view === 1 ? true : false}  
+        onclick={() => view = 1} 
+        label="Timeline" />
+      <NavigationItem
+        active={view === 2 ? true : false}  
+        label="Photos" 
+        onclick={() => view = 2} />
+      <NavigationItem
+        active={view === 3 ? true : false}  
+        label="Map"
+        onclick={() => view = 3} />     
+    </NavigationBar>  
 
-  {#if flavor}
-    <button class="fab" onclick={onAddClick} type="button">
-      <span>
-        <Icon 
-          height="24" 
-          icon="material-symbols:add" 
-          width="24" />
-      </span>
-    </button>
-  {/if}
-</section>
+    {#if view === 0}
+      <Analytics 
+        {flavor} 
+        hidden={view === 0 ? false : true} 
+        items={reviews}
+        recommendations={recommendations} />      
+    {:else if view === 1}
+      <Timeline items={reviews} onchange={onTimelineChange}>
+        <div class="empty">
+          {#if flavor}
+            <p>Empty Timeline</p>
+            <p>Add a review to get started!</p>
+          {:else}
+            <p>Select a flavor to get started!</p>
+            <button 
+              class="m3"
+              onclick={() => drawer.show()} 
+              type="button">
+              Select a flavor
+            </button>          
+          {/if}
+        </div>
+      </Timeline>
+    {:else if view === 2}
+      <Photos items={photos} onchange={onPhotosChange}>
+        <div class="empty">
+          <p class="photos">Empty Photos</p>
+          <p class="photos">There are no reviews with photos.</p>                
+        </div>
+      </Photos>
+    {:else if view === 3}
+      <Map items={places} onchange={onMapChange} />  
+    {/if}
 
-<Drawer 
-  bind:this={drawer}
-  {count}
-  items={catalog && catalog.tastes ? catalog.tastes : null} 
-  onchange={onBookChange} 
-  selected={flavor ? flavor.singular : null} />
+    {#if flavor}
+      <button class="fab" onclick={onAddClick} type="button">
+        <span>
+          <Icon 
+            height="24" 
+            icon="material-symbols:add" 
+            width="24" />
+        </span>
+      </button>
+    {/if}
+  </section>
 
-<Review 
-  bind:this={detail}
-  flavor={flavor ? flavor : null}
-  onchange={onReviewChange} />
+  <Message 
+    bind:this={message} />
 
-<Account 
-  bind:this={account} 
-  onchange={onReviewChange} 
-  tastes={catalog && catalog.tastes ? catalog.tastes : null} />
+  <Drawer 
+    bind:this={drawer}
+    {count}
+    items={catalog && catalog.tastes ? catalog.tastes : null} 
+    onchange={onBookChange} 
+    onmessage={onMessageClick}
+    selected={flavor ? flavor.singular : null} />
+
+  <Review 
+    bind:this={detail}
+    flavor={flavor ? flavor : null}
+    onchange={onReviewChange} />
+
+  <Account 
+    bind:this={account} 
+    {logged}
+    onchange={onReviewChange} 
+    tastes={catalog && catalog.tastes ? catalog.tastes : null}
+    {user} />
+
+</main>
 
 <style>
   :root {
@@ -376,6 +417,9 @@
   }
 
   :global( body ) {
+    align-items: center;    
+    background: #f8f8f8;    
+    box-sizing: border-box;    
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -466,7 +510,24 @@
     color: #f4f4f4;
   }
 
+  main {
+    background: #ffffff;
+    box-sizing: border-box;
+    display: flex;
+    flex-basis: 0;
+    flex-direction: column;
+    flex-grow: 1;
+    margin: 0;
+    max-width: 430px;
+    min-height: 100%;
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+    width: 100vw;
+  }
+
   section {
+    background: #ffffff;
     box-sizing: border-box;
     display: flex;
     flex-basis: 0;
@@ -476,5 +537,6 @@
     overflow: hidden;
     padding: 0;
     position: relative;
+    width: 100%;
   }
 </style>

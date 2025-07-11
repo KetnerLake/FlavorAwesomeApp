@@ -180,6 +180,7 @@
       } else {
         readonly = true;              
         db.editReview( value ).then( ( data ) => {
+          open = false;
           value = data;
           onchange(); 
         } );
@@ -497,6 +498,7 @@
     height: 100%;
     left: 0;
     margin: 0;
+    max-width: 430px;
     overflow: hidden;
     padding: 0;
     position: absolute;

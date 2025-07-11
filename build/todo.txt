@@ -1,5 +1,4 @@
 - Photos field: Modernize carousel with swipe
 - Location: Location lookup dialog
-- Weather: Add weather capture/reporting
-- Navigation: Move to top of list, float add button
 - Plot: Click only with animated indicator of touch point
+- Review: Swipe details for previous/next

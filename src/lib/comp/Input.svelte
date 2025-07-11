@@ -154,7 +154,7 @@
     flex-basis: 0;
     flex-direction: row;
     flex-grow: var( --flex-grow, 1 );
-    margin: 0;
+    margin: var( --margin, 0 );
     outline: none;
     padding: 8px 4px 6px 16px;
     position: relative;

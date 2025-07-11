@@ -5,7 +5,7 @@
   import Icon from "@iconify/svelte";
   import TextField from "../field/TextField.svelte";
 
-  let {email, name, tastes} = $props();
+  let {email, name, onlogout, tastes} = $props();
 
   const db = new DexieCloud();
   
@@ -49,10 +49,6 @@
     }
   }
 
-  function onLogoutClick() {
-    db.logout();
-  }
-
   onMount( () => {
     settings = db.readSettings().then( ( data ) => data ); 
     console.log( settings );
@@ -62,14 +58,6 @@
 <div class="screen">
   <Avatar src={settings && settings.avatar ? settings.avatar : null} />
   <p class="email">{email}</p>
-  <form>
-    <TextField
-      icon="material-symbols:label-outline-rounded"
-      label="Name" 
-      placeholder="How should I refer to you?" 
-      value={name}
-      --primary-accent-color="#5fb2ff" />
-  </form>
 
   <div class="heading">
     <span>
@@ -102,7 +90,7 @@
     {/each}
   </ul>
   <button class="utility" onclick={onDeleteClick} type="button">Delete all data</button>  
-  <button class="utility" onclick={onLogoutClick} type="button">Logout</button>
+  <button class="utility" onclick={onlogout} type="button">Logout</button>
 </div>
 
 <style>
@@ -119,7 +107,7 @@
     letter-spacing: 0.10px;
     line-height: 20px;    
     min-height: 40px;
-    margin: auto 16px 0 16px;
+    margin: 16px 16px 0 16px;
     outline: none;
     padding: 0;
     -webkit-tap-highlight-color: transparent;    
@@ -173,14 +161,9 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-width: 100vw;    
+    min-width: 100%;    
     overflow: auto;
     padding: 16px 0 16px 0;
-  }
-
-  form {
-    margin: 0;
-    padding: 0;
   }
 
   h3 {

@@ -1,7 +1,7 @@
 <script>
   import Icon from "@iconify/svelte";
 
-  let {count, items, onchange, selected = null} = $props();
+  let {count, items, onchange, onmessage, selected = null} = $props();
 
   let drawer;
   let scrim;
@@ -23,6 +23,11 @@
     } else {
       hide();      
     }
+  }
+
+  function onMessageClick() {
+    hide();
+    if( onmessage ) onmessage();    
   }
 
   export function hide() {
@@ -124,7 +129,7 @@
         </button>
       </li>            
       <li>
-        <button type="button">
+        <button onclick={onMessageClick} type="button">
           <span>
             <Icon 
               color="#49454F" 
@@ -149,14 +154,14 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    left: -100vw;
+    left: -100%;
     margin: 0;
     padding: 0;
     padding-bottom: max( 16px, env( safe-area-inset-bottom ) );
     padding-top: max( 16px, env( safe-area-inset-top ) );                                          
     position: absolute;
     top: 0;
-    width: calc( 100vw - 48px );
+    width: calc( 100% - 48px );
   }
 
   button.scrim {
@@ -265,13 +270,13 @@
     display: flex;
     flex-direction: row;
     height: 100%;
-    left: -100vw;
+    left: -100%;
     margin: 0;
     overflow: hidden;
     padding: 0;
     position: absolute;
     top: 0;
-    width: 100vw;
+    width: 100%;
     z-index: 125;
   }
 </style>

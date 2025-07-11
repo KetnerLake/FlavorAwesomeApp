@@ -184,7 +184,7 @@ export class DexieCloud {
   }
 
   sync() {
-    console.log( 'DC SYNC' );
+    console.log( 'DXC SYNC' );
     return this._db.cloud.sync( {purpose: 'pull', wait: true} );
   }
 

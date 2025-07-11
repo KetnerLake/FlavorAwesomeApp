@@ -1,25 +1,32 @@
 <script>
   import { onMount } from "svelte";  
   import AppBar from "../AppBar.svelte";
-  import { DexieCloud } from "$lib/DexieCloud.svelte";  
+  import Checkout from "./Checkout.svelte";  
+  import { DexieCloud } from "$lib/DexieCloud.svelte.js";
   import Icon from "@iconify/svelte";  
   import IconButton from "../IconButton.svelte";
   import Input from "../Input.svelte";
-    import Settings from "./Settings.svelte";
+  import Settings from "./Settings.svelte";
+  import Verification from "./Verification.svelte";
 
-  let {onchange, tastes, user} = $props();
+  let {logged = false, onchange, tastes, user = null} = $props();
 
   let db = new DexieCloud();
+  let interaction = $state( null );  
+  let mode = $state( null );  
   let screen;
 
-  let email = $state( null );
-  let interaction = $state( null );
-  let name = $state( null );
-  let otp = $state( null );
-  
-  let logged_in = $derived( user === 'unauthorized' ? false : true );
-  let ui = $derived( interaction === null ? 'sign_in' : interaction.type );
+  let login = db.ui.subscribe( ( evt ) => {
+    console.log( 'INTERACTION EVENT' );
+    console.log( evt );
 
+    if( evt ) {
+      mode = null;
+      interaction = evt;
+    } else {
+      interaction = null;
+    }
+  } );    
 
   export function hide() {
     return screen.animate( [
@@ -30,11 +37,13 @@
       easing: 'ease-in-out',
       fill: 'forwards'      
     } ).finished.then( () => {
+      mode = null;
       screen.style.display = 'none';
     } );
   }
 
-  export function show() {
+  export function show( payment = null ) {
+    mode = payment;
     screen.style.display = 'flex';
     screen.animate( [
       {top: '100vh'},
@@ -46,69 +55,41 @@
     } );
   }  
 
-  onMount( () => {
-    db.ui.subscribe( ( o ) => {
-      console.log( 'INTERACTION' );
-      console.log( o );
-      if( o === undefined ) {
-        if( logged_in ) {
-          console.log( 'INTERACTION: LOGGED IN' );
-          /*
-          db.sync().then( () => {
-            console.log( 'INTERACTION: INITIAL SYNC' );
-            if( onchange ) onchange();
-          } );
-          */
-        }
+  function onAccountLogout() {
+    const result = confirm( 'Are you sure you want to logout?' );
+    if( result ) db.logout();
+  }
 
-        interaction = null;
-      } else {
-        console.log( 'MESSAGE' );
-        console.log( o.messageCode )        
-        interaction = o;
-      }
-    } );
+  function onAccountVerify( email ) {
+    console.log( 'VERIFY: ' + email );
+    db.login( email );
+  }
 
-    /*
-    db.user.subscribe( ( o ) => {
-      console.log( 'USER' );
-      console.log( o );
+  function onCheckout( product ) {
+    fetch( '/api/checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify( {
+        product
+      } )
+    } )
+    .then( ( response ) => response.json() )
+    .then( ( result ) => {
+      console.log( result );
+      window.location = result.session.url;
     } );
-    */
-  } );
+  }
 
   function onCloseClick() {
     hide();
   }
 
-  function onSendClick() {
-    if( name === null ) {
-      alert( 'Name is required.' );
-      return;
-    }
-
-    if( email === null ) {
-      alert( 'Email address is required.' );
-      return;
-    }
-
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if( !regex.test( email ) ) {
-      alert( 'Email address is invalid.' );
-      return;
-    }
-
-    console.log( 'SEND: ' + email );
-    db.login( email );
-  }
-
-  function onSignClick() {
+  function onVerifyToken( otp ) {
     console.log( 'OTP: ' + otp );
     interaction.onSubmit( {otp} );
   }
-
-  $inspect( otp );
 </script>
 
 <section bind:this={screen}>
@@ -125,46 +106,13 @@
     {/snippet}
   </AppBar>
   <article>
-
-    <!-- Collect email/send OTP -->
-    <div class="screen">
-      <figure>
-        <img alt="Feature details" src="/img/secure.svg" />
-      </figure>
-      <h3>Verify Identity</h3>
-      <p>Enter name and email address<br/>to send one-time password.</p>
-      <form>
-        <Input 
-          label="Name" 
-          placeholder="How should I refer to you?" 
-          onchange={( evt ) => name = evt.value} 
-          --primary-accent-color="#5fb2ff" />
-        <Input 
-          label="Email address" 
-          placeholder="Use email to login" 
-          onchange={( evt ) => email = evt.value} 
-          --primary-accent-color="#5fb2ff" />    
-        <button onclick={onSendClick} type="button">Send verification</button>
-      </form>
-    </div>
-
-    <!-- Enter OTP -->
-    <div class="screen" style="justify-content: center;">
-      <h3>Verification Code</h3>
-      <p style="padding: 0 16px 0 16px;">A one-time password (OTP/verification) has been sent to the provided email address.</p>
-      <form>
-        <Input 
-          label="OTP" 
-          onchange={( evt ) => otp = evt.value }
-          placeholder="One-time password from email" 
-          --primary-accent-color="#5fb2ff" />    
-        <button onclick={onSignClick} type="button">Sign in</button>
-      </form>
-    </div>      
-
-    <!-- Settings -->
-    <Settings email={user} tastes={tastes} />
-
+    {#if logged}
+      <Settings email={user} onlogout={onAccountLogout} tastes={tastes} />
+    {:else if interaction}
+      <Verification ontoken={onVerifyToken} />
+    {:else}
+      <Checkout {mode} oncheckout={onCheckout} onverify={onAccountVerify} />
+    {/if}    
   </article>
 </section>
 
@@ -187,85 +135,11 @@
     height: 100%;
     gap: 16px;
     padding: 16px 0 16px 0;
-    min-width: 100vw;
+    min-width: 100%;
   }
 
   div.spacer {
     min-width: 8px;
-  }
-  
-  form button {
-    align-self: center;
-    appearance: none;
-    background: #5fb2ff;
-    border: none;
-    border-radius: 40px;
-    color: #ffffff;
-    cursor: pointer;
-    font-family: 'Roboto Variable', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    height: 40px;
-    letter-spacing: 0.10px;
-    line-height: 20px;
-    margin: 0;
-    outline: none;
-    padding: 0 16px 0 16px;
-    width: 100%;
-  }
-
-  figure {
-    align-items: center;
-    box-sizing: border-box;
-    border: dashed #00000010 4px;
-    border-radius: 16px;
-    display: flex;
-    flex-basis: 0;
-    flex-grow: 1;
-    justify-content: center;
-    margin: 0 16px 0 16px;
-    width: calc( 100vw - 32px );
-  }
-
-  figure img {
-    width: 40vw;
-  }
-
-  form {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin: 0;
-    padding: 0 16px 0 16px;
-    width: 100%;
-  }
-
-  h3 {
-    box-sizing: border-box;
-    color: var( --primary-text-color );
-    cursor: default;
-    font-family: 'Roboto Variable', sans-serif;
-    font-size: 22px;
-    font-weight: 400;
-    line-height: 28px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-  }  
-
-  p {
-    box-sizing: border-box;
-    color: var( --secondary-text-color );
-    cursor: default;
-    font-family: 'Roboto Variable', sans-serif;
-    font-size: 14px;
-    font-weight: 400;
-    letter-spacing: 0.50px;
-    line-height: 20px;
-    margin: 0;
-    padding: 0;
-    text-align: center;
   }
 
   section {
@@ -283,7 +157,7 @@
     position: absolute;
     top: 100vh;
     transition: top 0.30s ease-in-out;
-    width: 100vw;
+    width: 100%;
     z-index: 125;
   }
 </style>
