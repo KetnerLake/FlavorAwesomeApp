@@ -73,7 +73,7 @@
               width="22" />
           </span>
           <span>Lifetime</span>
-          <span>$165.00</span>
+          <span>$100.00</span>
         </button>
       </li>        
     </ul>
