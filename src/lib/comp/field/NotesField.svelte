@@ -65,6 +65,7 @@
 
 <style>
   div.label {
+    border-bottom: solid 1px #00000010;    
     box-sizing: border-box;
     display: flex;
     flex-direction: row;

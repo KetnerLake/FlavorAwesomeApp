@@ -411,10 +411,10 @@
     {#if readonly && value && value.latitude}
       <div class="extra">
         <LabelField 
-          bottom={false}
+          bottom={true}
           icon="material-symbols:my-location-outline-rounded" 
           label="Coordinates" 
-          top={true}
+          top={false}
           value="{value.latitude.toFixed( 5 )}, {value.longitude.toFixed( 5 )}">
         </LabelField>
       </div>
@@ -422,10 +422,10 @@
     {#if readonly && value && value.weather}
       <div class="extra">
         <LabelField 
-          bottom={false}
+          bottom={true}
           icon={value.weather} 
           label="Weather" 
-          top={true}
+          top={false}
           value="{value.condition}, {value.temperature.toFixed( 0 )}&deg;F">
         </LabelField>
       </div>
@@ -504,7 +504,7 @@
     position: absolute;
     top: 100vh;
     transition: top 0.30s ease-in-out;
-    width: 100vw;
+    width: 100%;
     z-index: 125;
   }
 </style>
