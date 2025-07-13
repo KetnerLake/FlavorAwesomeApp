@@ -83,10 +83,11 @@
   li {
     box-sizing: border-box;
     display: flex;
-    height: calc( ( 100vw / 2 ) - 1px );
+    /* height: calc( ( 100% / 2 ) - 1px ); */
+    aspect-ratio: 1.0;
     margin: 0;    
     padding: 0;    
-    width: calc( ( 100vw / 2 ) - 1px );
+    /* width: calc( ( 100% / 2 ) - 1px ); */
   }
 
   p {
@@ -94,10 +95,12 @@
     color: #ffffff;
     font-family: 'Roboto Variable', sans-serif;
     margin: 0;
-    mix-blend-mode: screen;
     padding: 0;
     position: absolute;
     right: 12px;
+    text-shadow:
+      0 0 3px rgba(0, 0, 0, 0.6),
+      0 0 10px rgba(0, 0, 0, 0.4);        
   }
 
   p.date {
