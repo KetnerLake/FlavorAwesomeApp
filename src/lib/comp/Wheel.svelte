@@ -15,12 +15,16 @@
     for( let entry of entries ) {
       if( chart ) {
         if( interactive ) {
-          svg.setAttributeNS( null, 'viewBox', '-70 -150 140 200' );
+          const ratio = svg.clientWidth / svg.clientHeight;
+          console.log( ratio );
+          console.log( ( 150 / ratio ) - 24);
+          svg.setAttributeNS( null, 'viewBox', `-75 -150 150 ${150 / ratio}` );
         } else {
           const chart_bounds = {
             width: entry.contentRect.width,
             height: entry.contentRect.height
           };
+
           svg.setAttributeNS( null, 'viewBox', `${0 - ( chart_bounds.width / 2 )} ${0 - ( chart_bounds.height / 2 )} ${chart_bounds.width} ${chart_bounds.height}` );          
 
           if( chart_bounds.width !== 0 ) {

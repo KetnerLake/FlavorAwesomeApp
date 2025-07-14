@@ -6,6 +6,7 @@
 
   let index = $state( 0 );
   let rotate = $state( 0 );
+  let width = $state( 0 );
 
   function onLeftClick() {
     rotate = rotate + 1;
@@ -47,7 +48,7 @@
   }
 </script>
 
-<div class="profile">
+<div bind:clientWidth={width} class="profile">
   <div class="controls">
     <button onclick={onLeftClick} type="button">
       <Icon height="24" icon="material-symbols:chevron-left" width="24" />
@@ -63,7 +64,7 @@
     {spokes} 
     value={value === null ? [] : value} 
     rotate={( 360 / spokes.length ) * rotate} />
-  <div class="value">
+  <div class="value" style:height={( ( ( ( ( width / 0.51 ) / 2 ) / 5 ) * 4 ) + 48 ) + 'px'}>
     <button data-value="5" onclick={onValueClick} type="button">5</button>
     <button data-value="4" onclick={onValueClick} type="button">4</button>
     <button data-value="3" onclick={onValueClick} type="button">3</button>
@@ -131,12 +132,21 @@
 
   div.value {
     align-items: center;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    gap: 33px;
     justify-content: space-between;    
-    left: calc( 50% - 20px );
+    left: calc( 50% - 24px );
     position: absolute;
-    top: 83px;
+    top: 78px;
+  }
+
+  div.value button {
+    border-radius: 48px;
+    box-shadow:
+      0 0 3px rgba(0, 0, 0, 0.6),
+      0 0 10px rgba(0, 0, 0, 0.4);            
+    height: 48px;
+    width: 48px;
   }
 </style>

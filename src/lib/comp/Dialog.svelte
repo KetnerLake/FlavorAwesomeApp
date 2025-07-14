@@ -32,13 +32,12 @@
     box-sizing: border-box;
     flex-direction: column;    
     height: 100%;
-    margin: 0;
     max-height: 100%;
-    max-width: 100vw;
+    max-width: 430px;
     opacity: 1.0;
     overflow: hidden;
     padding: 0;
-    width: 100vw;
+    width: 100%;
   }
 
   dialog::backdrop {
