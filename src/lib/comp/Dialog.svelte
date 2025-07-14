@@ -5,6 +5,14 @@
 
   let dialog = $state();
 
+  function onCloseClick() {
+    if( onclose ) {
+      onclose();
+    } else {
+      close();
+    }    
+  }
+
   export function close() {
     dialog.close();
   }
@@ -16,7 +24,7 @@
 
 <dialog bind:this={dialog}>
   <header>
-    <IconButton name="material-symbols:close" onclick={onclose} --icon-button-color="var( --primary-accent-color )" />
+    <IconButton name="material-symbols:close" onclick={onCloseClick} --icon-button-color="var( --primary-accent-color )" />
     <h3>{label}</h3>
     <button onclick={onsave} type="button">Save</button>
   </header>
@@ -41,7 +49,7 @@
   }
 
   dialog::backdrop {
-    background: #ffffff;
+    background: #f8f8f8;
   }
 
   dialog[open] {

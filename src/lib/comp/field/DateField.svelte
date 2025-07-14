@@ -14,6 +14,13 @@
   } = $props();
 
   let dialog = $state();
+  let calendar = $derived.by( () => {
+    if( value === null ) {
+      return new Date();
+    }
+
+    return value;
+  } );
 
   let date = $derived.by( () => {
     if( value !== null ) {
@@ -28,18 +35,16 @@
     }
   } );
 
-  function onCalendarChange( evt ) {
-    console.log( evt );
-    value = new Date( evt.value.getTime() );
-    if( onchange ) onchange( {name, value} );
-  }
-
   function onDialogClose() {
+    calendar = new Date();
     dialog.close();
   }
 
   function onDialogSave() {
+    value = new Date( calendar.getTime() );
     dialog.close();
+    calendar = new Date();
+    if( onchange ) onchange( {name, value} );    
   }
 </script>
 
@@ -73,13 +78,10 @@
   </div>
 
   <Dialog bind:this={dialog} onclose={onDialogClose} onsave={onDialogSave}>
-    <Calendar 
-      onchange={onCalendarChange} 
-      onclose={onDialogClose} 
-      onsave={onDialogSave} 
+    <Calendar
       name="date"
-      {label} 
-      {value} />
+      {label}
+      value={calendar} />
   </Dialog>
 {/if}
 

@@ -8,24 +8,23 @@
     label, 
     name,
     onchange, 
-    onclose, 
-    onsave, 
-    value
+    value = new Date()
   } = $props();
 
-  let valueLabel = $derived.by( () => {
-    let calendar = new Date( display.getTime() );
+  let monthLabel = $derived.by( () => {
+    return new Intl.DateTimeFormat( navigator.language, {
+      month: 'long',
+      year: 'numeric'
+    } ).format( display );
+  } );
 
-    if( value !== null ) {
-      calendar = new Date( value.getTime() );
-    }
-    
+  let valueLabel = $derived.by( () => {
     return new Intl.DateTimeFormat( navigator.language, {
       day: 'numeric',
       month: 'short',
       weekday: 'short',
       year: 'numeric'
-    } ).format( calendar );
+    } ).format( value ? value : new Date() );
   } );
 
   let months = $state( [] );
@@ -44,39 +43,69 @@
       weekDays.push( weekday.format( calendar ) );
       calendar.setDate( calendar.getDate() + 1 );
     }
-
-    // Months
-    calendar = new Date();       
-    calendar.setDate( 15 );
-
-    for( let m = 0; m < 6; m++ ) {
-      months.push( new Date( calendar.getTime() ) );
-      calendar.setMonth( calendar.getMonth() - 1 );
-    }
   } );
+
+  function onBeforeClick() {
+    let month = display.getMonth();
+    let year = display.getFullYear();
+
+    year = ( month === 0 ) ? year - 1 : year;
+    month = ( month === 0 ) ? 11 : month - 1;
+
+    display = new Date(
+      year,
+      month,
+      display.getDate()
+    );
+  }
+
+  function onNextClick() {
+    let month = display.getMonth();
+    let year = display.getFullYear();
+    
+    year = ( month === 11 ) ? year + 1 : year;
+    month = ( month + 1 ) % 12;
+    
+    display = new Date(
+      year,
+      month,
+      display.getDate()
+    );
+  }
 
   function onMonthChange( date ) {
     value = new Date( date.getTime() );
     if( onchange ) onchange( {name, value} );
+  }
+
+  function onTodayClick() {
+    value = new Date();
+    if( onchange ) onchange( {name, value} );    
   }
 </script>
 
 <section>
   <p>{label}</p>
   <h3>{valueLabel}</h3>
+  <div>
+    <p>{monthLabel}</p>
+    <button onclick={onBeforeClick} type="button">
+      <Icon height="24" icon="material-symbols:navigate-before" width="24" />
+    </button>
+    <button onclick={onNextClick} type="button">
+      <Icon height="24" icon="material-symbols:navigate-next" width="24" />
+    </button>    
+  </div>
   <ul>
     {#each weekDays as day}
       <li>{day}</li>
     {/each}
   </ul>
   <article>
-    {#each months as month}
-      <Month display={month} onchange={onMonthChange} />
-    {/each}
+    <Month {display} onchange={onMonthChange} {value} />
   </article>
   <footer>
-    <button onclick={onclose} type="button">Cancel</button>
-    <button onclick={onsave} type="button">Ok</button>
+    <button onclick={onTodayClick} type="button">Today</button>
   </footer>
 </section>
 
@@ -85,12 +114,47 @@
     box-sizing: border-box;
     display: flex;
     flex-basis: 0;
-    flex-direction: column-reverse;
+    flex-direction: column;
     flex-grow: 1;
     margin: 0;       
-    overflow: auto;
     padding: 0;    
   }
+
+  div {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    padding: 8px 12px 0 21px;    
+  }
+
+  div button {
+    align-items: center;
+    appearance: none;
+    background: none;
+    border: none;
+    box-sizing: border-box;
+    color: var( --primary-accent-color );
+    cursor: pointer;
+    font-family: 'Roboto Variable', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    height: 40px;
+    justify-content: center;
+    margin: 0;
+    outline: none;
+    padding: 0;
+    width: 40px;    
+  }
+
+  div p {
+    flex-basis: 0;
+    flex-grow: 1;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 40px;
+    padding: 0;
+  }  
 
   footer {
     align-items: center;
@@ -130,7 +194,7 @@
     font-weight: 400;
     line-height: 32px;
     margin: 0;
-    padding: 0 0 12px 48px;
+    padding: 0 0 12px 21px;
   }
 
   p {
@@ -143,7 +207,7 @@
     letter-spacing: 0.50px;
     line-height: 20px;
     margin: 0;
-    padding: 0 0 0 48px;
+    padding: 0 0 0 21px;
   }  
 
   section {

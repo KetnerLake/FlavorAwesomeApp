@@ -1,14 +1,7 @@
 <script>
-  let {display = new Date(), onchange, value = null} = $props();
+  let {display = new Date(), onchange, value = new Date()} = $props();
 
-  let monthLabel = $derived.by( () => {
-    return new Intl.DateTimeFormat( navigator.language, {
-      month: 'long',
-      year: 'numeric'
-    } ).format( display );
-  } ); 
-
-  let monthDays = $derived.by( () => {
+  let days = $derived.by( () => {
     const calendar = new Date( display.getFullYear(), display.getMonth(), 1 );      
     const dates = [];
     const today = new Date();
@@ -99,27 +92,24 @@
   }
 </script>
 
-<div>
-  <p>{monthLabel}</p>
-  <ul>
-    {#each monthDays as day}
-      <li>
-        <button  
-          class="day"
-          class:outside={day.outside} 
-          class:selected={day.selected}
-          class:today={day.today}
-          data-date={day.date}
-          data-month={day.month}
-          data-year={day.year}
-          onclick={onDayClick} 
-          type="button">
-          {day.date}
-        </button>
-      </li>
-    {/each}    
-  </ul>
-</div>
+<ul>
+  {#each days as day}
+    <li>
+      <button  
+        class="day"
+        class:outside={day.outside} 
+        class:selected={day.selected}
+        class:today={day.today}
+        data-date={day.date}
+        data-month={day.month}
+        data-year={day.year}
+        onclick={onDayClick} 
+        type="button">
+        {day.date}
+      </button>
+    </li>
+  {/each}    
+</ul>
 
 <style>
   button.day {        
@@ -164,26 +154,6 @@
     background: var( --primary-accent-color );
     color: #ffffff;
   }   
-
-  div {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    margin: 0;
-    padding: 0 0 8px 0;
-  }
-
-  p {
-    box-sizing: border-box;
-    color: var( --secondary-text-color );
-    font-family: 'Roboto Variable', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    letter-spacing: 0.50px;
-    line-height: 20px;
-    margin: 0;
-    padding: 10px 0 10px 32px;
-  }
 
   ul {
     box-sizing: border-box;
