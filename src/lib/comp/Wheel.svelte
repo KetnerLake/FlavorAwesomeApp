@@ -16,8 +16,6 @@
       if( chart ) {
         if( interactive ) {
           const ratio = svg.clientWidth / svg.clientHeight;
-          console.log( ratio );
-          console.log( ( 150 / ratio ) - 24);
           svg.setAttributeNS( null, 'viewBox', `-75 -150 150 ${150 / ratio}` );
         } else {
           const chart_bounds = {
