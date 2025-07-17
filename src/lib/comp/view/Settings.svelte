@@ -164,6 +164,7 @@
     min-width: 100%;    
     overflow: auto;
     padding: 16px 0 16px 0;
+    padding-bottom: max( 16px, env( safe-area-inset-bottom ) );    
   }
 
   h3 {

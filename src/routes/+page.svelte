@@ -290,7 +290,6 @@
 </script>
 
 <svelte:head>
-  <link rel="manifest" href="./manifest.json" />
   <meta content={theme} name="theme-color" />
 </svelte:head>
 
@@ -434,7 +433,7 @@
     background: var( --primary-accent-color );
     border: none;
     border-radius: 48px;
-    bottom: 16px;
+    bottom: max( 16px, env( safe-area-inset-bottom ) );    
     box-shadow: 
       0px 3px 1px -2px rgb( 0 0 0 / 20% ), 
       0px 2px 2px 0px rgb( 0 0 0 / 14% ), 

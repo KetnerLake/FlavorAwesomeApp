@@ -501,6 +501,7 @@
     max-width: 430px;
     overflow: hidden;
     padding: 0;
+    padding-bottom: max( 0, env( safe-area-inset-bottom ) );    
     position: absolute;
     top: 100vh;
     transition: top 0.30s ease-in-out;
