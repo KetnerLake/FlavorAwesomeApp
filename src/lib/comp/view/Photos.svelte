@@ -75,6 +75,7 @@
   }  
 
   img {
+    aspect-ratio: 1.0;
     height: 100%;
     object-fit: cover;
     width: 100%;
@@ -83,8 +84,7 @@
   li {
     box-sizing: border-box;
     display: flex;
-    /* height: calc( ( 100% / 2 ) - 1px ); */
-    aspect-ratio: 1.0;
+    /* height: calc( ( 100vw / 2 ) - 1px ); */
     margin: 0;    
     padding: 0;    
     /* width: calc( ( 100% / 2 ) - 1px ); */
